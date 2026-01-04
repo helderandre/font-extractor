@@ -258,8 +258,6 @@ font-extractor/
 ### Font Conversion
 ![Font Conversion Feature](screenshots/conversion.png)
 
-> **Note:** Add your own screenshots to a `screenshots/` folder in the repository.
-
 ---
 
 ## 🤝 Contributing
