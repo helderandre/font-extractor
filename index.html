@@ -1,0 +1,1277 @@
+<!DOCTYPE html>
+<html lang="pt-BR" class="light">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Font Extractor - Professional Font Management</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Manrope:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --background: oklch(1.0000 0 0);
+            --foreground: oklch(0.2101 0.0318 264.6645);
+            --card: oklch(1.0000 0 0);
+            --card-foreground: oklch(0.2101 0.0318 264.6645);
+            --popover: oklch(1.0000 0 0);
+            --popover-foreground: oklch(0.2101 0.0318 264.6645);
+            --primary: oklch(0.6716 0.1368 48.5130);
+            --primary-foreground: oklch(1.0000 0 0);
+            --secondary: oklch(0.5360 0.0398 196.0280);
+            --secondary-foreground: oklch(1.0000 0 0);
+            --muted: oklch(0.9670 0.0029 264.5419);
+            --muted-foreground: oklch(0.5510 0.0234 264.3637);
+            --accent: oklch(0.9491 0 0);
+            --accent-foreground: oklch(0.2101 0.0318 264.6645);
+            --destructive: oklch(0.6368 0.2078 25.3313);
+            --destructive-foreground: oklch(0.9851 0 0);
+            --border: oklch(0.9276 0.0058 264.5313);
+            --input: oklch(0.9276 0.0058 264.5313);
+            --ring: oklch(0.6716 0.1368 48.5130);
+            --radius: 0.75rem;
+            --shadow-sm: 0px 1px 4px 0px hsl(0 0% 0% / 0.05), 0px 1px 2px -1px hsl(0 0% 0% / 0.05);
+            --shadow: 0px 1px 4px 0px hsl(0 0% 0% / 0.05), 0px 1px 2px -1px hsl(0 0% 0% / 0.05);
+            --shadow-md: 0px 1px 4px 0px hsl(0 0% 0% / 0.05), 0px 2px 4px -1px hsl(0 0% 0% / 0.05);
+            --shadow-lg: 0px 1px 4px 0px hsl(0 0% 0% / 0.05), 0px 4px 6px -1px hsl(0 0% 0% / 0.05);
+        }
+
+        .dark {
+            --background: oklch(0.1797 0.0043 308.1928);
+            --foreground: oklch(0.8109 0 0);
+            --card: oklch(0.1822 0 0);
+            --card-foreground: oklch(0.8109 0 0);
+            --popover: oklch(0.1797 0.0043 308.1928);
+            --popover-foreground: oklch(0.8109 0 0);
+            --primary: oklch(0.7214 0.1337 49.9802);
+            --primary-foreground: oklch(0.1797 0.0043 308.1928);
+            --secondary: oklch(0.5940 0.0443 196.0233);
+            --secondary-foreground: oklch(0.1797 0.0043 308.1928);
+            --muted: oklch(0.2520 0 0);
+            --muted-foreground: oklch(0.6268 0 0);
+            --accent: oklch(0.3211 0 0);
+            --accent-foreground: oklch(0.8109 0 0);
+            --destructive: oklch(0.5940 0.0443 196.0233);
+            --destructive-foreground: oklch(0.1797 0.0043 308.1928);
+            --border: oklch(0.2520 0 0);
+            --input: oklch(0.2520 0 0);
+            --ring: oklch(0.7214 0.1337 49.9802);
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Manrope', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+            background: var(--background);
+            color: var(--foreground);
+            line-height: 1.6;
+            transition: background-color 0.3s ease, color 0.3s ease;
+        }
+
+        .container {
+            max-width: 1400px;
+            margin: 0 auto;
+            padding: 2rem;
+        }
+
+        /* Header */
+        .header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 3rem;
+            padding-bottom: 1.5rem;
+            border-bottom: 1px solid var(--border);
+        }
+
+        .header-title {
+            display: flex;
+            flex-direction: column;
+            gap: 0.25rem;
+        }
+
+        .header-title h1 {
+            font-size: 1.875rem;
+            font-weight: 700;
+            letter-spacing: -0.025em;
+            color: var(--foreground);
+        }
+
+        .header-title p {
+            font-size: 0.875rem;
+            color: var(--muted-foreground);
+            font-weight: 400;
+        }
+
+        .header-actions {
+            display: flex;
+            gap: 0.75rem;
+            align-items: center;
+        }
+
+        .theme-toggle {
+            width: 2.5rem;
+            height: 2.5rem;
+            border-radius: var(--radius);
+            border: 1px solid var(--border);
+            background: var(--card);
+            color: var(--foreground);
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: all 0.2s ease;
+            font-size: 1.125rem;
+        }
+
+        .theme-toggle:hover {
+            background: var(--accent);
+        }
+
+        .status-badge {
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            padding: 0.5rem 1rem;
+            background: var(--card);
+            border: 1px solid var(--border);
+            border-radius: var(--radius);
+            font-size: 0.875rem;
+            font-weight: 500;
+        }
+
+        .status-dot {
+            width: 0.5rem;
+            height: 0.5rem;
+            border-radius: 50%;
+            background: #22c55e;
+            animation: pulse 2s infinite;
+        }
+
+        @keyframes pulse {
+            0%, 100% { opacity: 1; }
+            50% { opacity: 0.5; }
+        }
+
+        /* Input Section */
+        .input-section {
+            background: var(--card);
+            border: 1px solid var(--border);
+            border-radius: var(--radius);
+            padding: 2rem;
+            margin-bottom: 2rem;
+            box-shadow: var(--shadow-sm);
+        }
+
+        .input-label {
+            font-size: 0.875rem;
+            font-weight: 600;
+            margin-bottom: 0.75rem;
+            display: block;
+            color: var(--foreground);
+        }
+
+        .input-wrapper {
+            display: flex;
+            gap: 0.75rem;
+            margin-bottom: 1.5rem;
+        }
+
+        .input-field {
+            flex: 1;
+            padding: 0.75rem 1rem;
+            border: 1px solid var(--input);
+            border-radius: calc(var(--radius) - 2px);
+            background: var(--background);
+            color: var(--foreground);
+            font-size: 0.875rem;
+            font-family: inherit;
+            transition: all 0.2s ease;
+        }
+
+        .input-field:focus {
+            outline: none;
+            border-color: var(--ring);
+            box-shadow: 0 0 0 3px oklch(from var(--ring) l c h / 0.1);
+        }
+
+        .input-field::placeholder {
+            color: var(--muted-foreground);
+        }
+
+        .btn {
+            padding: 0.75rem 1.5rem;
+            border-radius: calc(var(--radius) - 2px);
+            font-size: 0.875rem;
+            font-weight: 600;
+            border: none;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            display: inline-flex;
+            align-items: center;
+            gap: 0.5rem;
+            white-space: nowrap;
+            font-family: inherit;
+        }
+
+        .btn-primary {
+            background: var(--primary);
+            color: var(--primary-foreground);
+        }
+
+        .btn-primary:hover:not(:disabled) {
+            opacity: 0.9;
+            transform: translateY(-1px);
+            box-shadow: var(--shadow-md);
+        }
+
+        .btn-secondary {
+            background: var(--secondary);
+            color: var(--secondary-foreground);
+        }
+
+        .btn-secondary:hover:not(:disabled) {
+            opacity: 0.9;
+        }
+
+        .btn-outline {
+            background: transparent;
+            border: 1px solid var(--border);
+            color: var(--foreground);
+        }
+
+        .btn-outline:hover:not(:disabled) {
+            background: var(--accent);
+        }
+
+        .btn:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+        }
+
+        .btn-group {
+            display: flex;
+            gap: 0.75rem;
+            flex-wrap: wrap;
+        }
+
+        /* Quick Links */
+        .quick-links {
+            margin-bottom: 1.5rem;
+        }
+
+        .quick-links-label {
+            font-size: 0.75rem;
+            color: var(--muted-foreground);
+            margin-bottom: 0.5rem;
+            display: block;
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+            font-weight: 600;
+        }
+
+        .quick-links-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
+            gap: 0.5rem;
+        }
+
+        .quick-link {
+            padding: 0.5rem 0.75rem;
+            background: var(--muted);
+            border: 1px solid var(--border);
+            border-radius: calc(var(--radius) - 4px);
+            font-size: 0.75rem;
+            font-weight: 500;
+            color: var(--foreground);
+            text-decoration: none;
+            text-align: center;
+            transition: all 0.2s ease;
+            cursor: pointer;
+        }
+
+        .quick-link:hover {
+            background: var(--accent);
+            border-color: var(--ring);
+        }
+
+        /* Loading */
+        .loading {
+            display: none;
+            text-align: center;
+            padding: 3rem;
+            background: var(--card);
+            border: 1px solid var(--border);
+            border-radius: var(--radius);
+            margin: 2rem 0;
+        }
+
+        .loading.active {
+            display: block;
+        }
+
+        .spinner {
+            width: 2.5rem;
+            height: 2.5rem;
+            border: 3px solid var(--muted);
+            border-top-color: var(--primary);
+            border-radius: 50%;
+            animation: spin 0.8s linear infinite;
+            margin: 0 auto 1rem;
+        }
+
+        @keyframes spin {
+            to { transform: rotate(360deg); }
+        }
+
+        .loading-text {
+            font-size: 0.875rem;
+            color: var(--muted-foreground);
+            font-weight: 500;
+        }
+
+        /* Results */
+        .results {
+            display: none;
+        }
+
+        .results.active {
+            display: block;
+        }
+
+        .results-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 1.5rem;
+        }
+
+        .results-header h2 {
+            font-size: 1.25rem;
+            font-weight: 700;
+            color: var(--foreground);
+        }
+
+        .stats {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 1rem;
+            margin-bottom: 2rem;
+        }
+
+        .stat-card {
+            background: var(--card);
+            border: 1px solid var(--border);
+            border-radius: var(--radius);
+            padding: 1.5rem;
+            box-shadow: var(--shadow-sm);
+        }
+
+        .stat-label {
+            font-size: 0.75rem;
+            color: var(--muted-foreground);
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+            font-weight: 600;
+            margin-bottom: 0.5rem;
+        }
+
+        .stat-value {
+            font-size: 2rem;
+            font-weight: 700;
+            color: var(--foreground);
+        }
+
+        /* Font List */
+        .fonts-grid {
+            display: grid;
+            gap: 1rem;
+        }
+
+        .font-card {
+            background: var(--card);
+            border: 1px solid var(--border);
+            border-radius: var(--radius);
+            padding: 1.5rem;
+            box-shadow: var(--shadow-sm);
+            transition: all 0.2s ease;
+        }
+
+        .font-card:hover {
+            box-shadow: var(--shadow-md);
+            border-color: var(--ring);
+        }
+
+        .font-card-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: start;
+            margin-bottom: 1rem;
+        }
+
+        .font-info {
+            flex: 1;
+        }
+
+        .font-name {
+            font-size: 1.125rem;
+            font-weight: 700;
+            color: var(--foreground);
+            margin-bottom: 0.25rem;
+        }
+
+        .font-meta {
+            display: flex;
+            gap: 1rem;
+            font-size: 0.75rem;
+            color: var(--muted-foreground);
+            flex-wrap: wrap;
+        }
+
+        .font-badge {
+            display: inline-flex;
+            align-items: center;
+            padding: 0.25rem 0.5rem;
+            background: var(--muted);
+            border-radius: calc(var(--radius) - 4px);
+            font-size: 0.625rem;
+            font-weight: 600;
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+            color: var(--foreground);
+        }
+
+        .font-url {
+            font-size: 0.75rem;
+            color: var(--muted-foreground);
+            word-break: break-all;
+            margin: 0.75rem 0;
+            padding: 0.75rem;
+            background: var(--muted);
+            border-radius: calc(var(--radius) - 4px);
+            font-family: 'JetBrains Mono', monospace;
+        }
+
+        .font-actions {
+            display: flex;
+            gap: 0.5rem;
+            margin-top: 1rem;
+            flex-wrap: wrap;
+        }
+
+        .font-actions .btn {
+            flex: 1;
+            min-width: 100px;
+            justify-content: center;
+            font-size: 0.75rem;
+            padding: 0.625rem 1rem;
+        }
+
+        /* Preview Section */
+        .preview-section {
+            margin-top: 1rem;
+            padding: 1.5rem;
+            background: var(--muted);
+            border: 1px solid var(--border);
+            border-radius: var(--radius);
+            display: none;
+        }
+
+        .preview-section.active {
+            display: block;
+        }
+
+        .preview-controls {
+            margin-bottom: 1rem;
+        }
+
+        .preview-input {
+            width: 100%;
+            padding: 0.75rem;
+            border: 1px solid var(--input);
+            border-radius: calc(var(--radius) - 2px);
+            background: var(--background);
+            color: var(--foreground);
+            font-size: 0.875rem;
+            font-family: inherit;
+            margin-bottom: 0.75rem;
+        }
+
+        .preview-input:focus {
+            outline: none;
+            border-color: var(--ring);
+        }
+
+        .preview-sizes {
+            display: flex;
+            gap: 0.5rem;
+            flex-wrap: wrap;
+        }
+
+        .size-btn {
+            padding: 0.375rem 0.75rem;
+            background: var(--background);
+            border: 1px solid var(--border);
+            border-radius: calc(var(--radius) - 4px);
+            font-size: 0.75rem;
+            font-weight: 600;
+            color: var(--foreground);
+            cursor: pointer;
+            transition: all 0.2s ease;
+        }
+
+        .size-btn:hover {
+            background: var(--accent);
+        }
+
+        .size-btn.active {
+            background: var(--primary);
+            color: var(--primary-foreground);
+            border-color: var(--primary);
+        }
+
+        .preview-display {
+            background: var(--background);
+            border: 1px solid var(--border);
+            border-radius: var(--radius);
+            padding: 2rem;
+            min-height: 150px;
+        }
+
+        .preview-text {
+            color: var(--foreground);
+            line-height: 1.5;
+            margin-bottom: 1rem;
+        }
+
+        /* Converter Section */
+        .converter-section {
+            margin-top: 1rem;
+            padding: 1.5rem;
+            background: var(--muted);
+            border: 1px solid var(--border);
+            border-radius: var(--radius);
+            display: none;
+        }
+
+        .converter-section.active {
+            display: block;
+        }
+
+        .converter-label {
+            font-size: 0.875rem;
+            font-weight: 600;
+            margin-bottom: 0.75rem;
+            display: block;
+        }
+
+        .format-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(80px, 1fr));
+            gap: 0.5rem;
+            margin-bottom: 1rem;
+        }
+
+        .format-option {
+            padding: 0.625rem;
+            background: var(--background);
+            border: 1px solid var(--border);
+            border-radius: calc(var(--radius) - 4px);
+            font-size: 0.75rem;
+            font-weight: 700;
+            text-align: center;
+            text-transform: uppercase;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            color: var(--foreground);
+        }
+
+        .format-option:hover {
+            background: var(--accent);
+        }
+
+        .format-option.selected {
+            background: var(--primary);
+            color: var(--primary-foreground);
+            border-color: var(--primary);
+        }
+
+        /* Message */
+        .message {
+            padding: 1rem 1.5rem;
+            border-radius: var(--radius);
+            margin: 1rem 0;
+            font-size: 0.875rem;
+            font-weight: 500;
+            display: flex;
+            align-items: center;
+            gap: 0.75rem;
+            animation: slideIn 0.3s ease-out;
+        }
+
+        @keyframes slideIn {
+            from {
+                opacity: 0;
+                transform: translateY(-10px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        .message.success {
+            background: oklch(0.95 0.05 145);
+            color: oklch(0.3 0.1 145);
+            border: 1px solid oklch(0.85 0.08 145);
+        }
+
+        .message.error {
+            background: oklch(0.95 0.05 25);
+            color: oklch(0.4 0.15 25);
+            border: 1px solid oklch(0.85 0.08 25);
+        }
+
+        .message.info {
+            background: oklch(0.95 0.03 250);
+            color: oklch(0.4 0.08 250);
+            border: 1px solid oklch(0.85 0.05 250);
+        }
+
+        /* Footer */
+        .footer {
+            margin-top: 4rem;
+            padding-top: 2rem;
+            border-top: 1px solid var(--border);
+            text-align: center;
+            color: var(--muted-foreground);
+            font-size: 0.875rem;
+        }
+
+        .footer a {
+            color: var(--primary);
+            text-decoration: none;
+            font-weight: 600;
+        }
+
+        .footer a:hover {
+            text-decoration: underline;
+        }
+
+        /* Responsive */
+        @media (max-width: 768px) {
+            .container {
+                padding: 1rem;
+            }
+
+            .header {
+                flex-direction: column;
+                align-items: flex-start;
+                gap: 1rem;
+            }
+
+            .input-wrapper {
+                flex-direction: column;
+            }
+
+            .btn-group {
+                flex-direction: column;
+            }
+
+            .btn-group .btn {
+                width: 100%;
+            }
+
+            .font-actions {
+                flex-direction: column;
+            }
+
+            .font-actions .btn {
+                width: 100%;
+            }
+        }
+
+        /* Empty State */
+        .empty-state {
+            text-align: center;
+            padding: 4rem 2rem;
+            color: var(--muted-foreground);
+        }
+
+        .empty-state-icon {
+            font-size: 3rem;
+            margin-bottom: 1rem;
+            opacity: 0.5;
+        }
+
+        .empty-state-text {
+            font-size: 1rem;
+            font-weight: 500;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <!-- Header -->
+        <header class="header">
+            <div class="header-title">
+                <h1>Font Extractor</h1>
+                <p>Extract and manage fonts from any website</p>
+            </div>
+            <div class="header-actions">
+                <div class="status-badge">
+                    <span class="status-dot"></span>
+                    <span id="statusText">API Online</span>
+                </div>
+                <button class="theme-toggle" onclick="toggleTheme()" title="Toggle theme">
+                    <span id="themeIcon">🌙</span>
+                </button>
+            </div>
+        </header>
+
+        <!-- Input Section -->
+        <section class="input-section">
+            <label class="input-label">Website URL</label>
+            <div class="input-wrapper">
+                <input 
+                    type="url" 
+                    class="input-field" 
+                    id="urlInput"
+                    placeholder="https://example.com"
+                >
+            </div>
+            
+            <div class="btn-group">
+                <button class="btn btn-primary" onclick="downloadFonts()" id="extractBtn">
+                    <span>🚀</span>
+                    <span>Extract Fonts</span>
+                </button>
+                <button class="btn btn-outline" onclick="listDownloadedFonts()" id="listBtn">
+                    <span>📋</span>
+                    <span>View Downloaded</span>
+                </button>
+            </div>
+        </section>
+
+        <!-- Loading -->
+        <div class="loading" id="loading">
+            <div class="spinner"></div>
+            <p class="loading-text">Analyzing website and extracting fonts...</p>
+        </div>
+
+        <!-- Results -->
+        <div class="results" id="results">
+            <div class="stats">
+                <div class="stat-card">
+                    <div class="stat-label">Fonts Found</div>
+                    <div class="stat-value" id="fontsFound">0</div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-label">Fonts Downloaded</div>
+                    <div class="stat-value" id="fontsDownloaded">0</div>
+                </div>
+            </div>
+
+            <div class="results-header">
+                <h2>Extracted Fonts</h2>
+                <button class="btn btn-primary" onclick="downloadAll()" style="padding: 0.5rem 1rem; font-size: 0.75rem;">
+                    <span>⬇️</span>
+                    <span>Download All</span>
+                </button>
+            </div>
+
+            <div class="fonts-grid" id="fontsList">
+                <div class="empty-state">
+                    <div class="empty-state-icon">📭</div>
+                    <p class="empty-state-text">No fonts found yet</p>
+                </div>
+            </div>
+        </div>
+
+        <!-- Message -->
+        <div id="message"></div>
+
+        <!-- Footer -->
+        <footer class="footer">
+            <p>Built with Python + FastAPI | <a href="http://localhost:8000/docs" target="_blank">API Documentation</a></p>
+        </footer>
+    </div>
+
+    <script>
+        const API_URL = 'http://localhost:8000';
+        let currentFonts = [];
+        let supportedFormats = {};
+        let selectedFormat = {};
+        let loadedFonts = {};
+
+        // Theme Management
+        function toggleTheme() {
+            const html = document.documentElement;
+            const currentTheme = html.classList.contains('dark') ? 'dark' : 'light';
+            const newTheme = currentTheme === 'dark' ? 'light' : 'dark';
+            
+            html.classList.remove(currentTheme);
+            html.classList.add(newTheme);
+            
+            document.getElementById('themeIcon').textContent = newTheme === 'dark' ? '☀️' : '🌙';
+            localStorage.setItem('theme', newTheme);
+        }
+
+        // Load saved theme
+        window.addEventListener('load', () => {
+            const savedTheme = localStorage.getItem('theme') || 'light';
+            document.documentElement.classList.add(savedTheme);
+            document.getElementById('themeIcon').textContent = savedTheme === 'dark' ? '☀️' : '🌙';
+            document.getElementById('urlInput').focus();
+        });
+
+        // Load supported formats
+        async function loadSupportedFormats() {
+            try {
+                const response = await fetch(`${API_URL}/supported-formats`);
+                const data = await response.json();
+                supportedFormats = data.formats || {};
+            } catch (error) {
+                console.error('Error loading formats:', error);
+            }
+        }
+
+        loadSupportedFormats();
+
+        // Check API status
+        async function checkAPI() {
+            try {
+                const response = await fetch(`${API_URL}/`);
+                if (response.ok) {
+                    document.getElementById('statusText').textContent = 'API Online';
+                    return true;
+                }
+            } catch (e) {
+                document.getElementById('statusText').textContent = 'API Offline';
+                showMessage('⚠️ API is offline. Please start the server.', 'error');
+                return false;
+            }
+        }
+
+        checkAPI();
+        setInterval(checkAPI, 10000);
+
+        function setUrl(url) {
+            document.getElementById('urlInput').value = url;
+            document.getElementById('urlInput').focus();
+        }
+
+        async function downloadFonts() {
+            const urlInput = document.getElementById('urlInput');
+            const url = urlInput.value.trim();
+
+            if (!url) {
+                showMessage('⚠️ Please enter a valid URL.', 'error');
+                urlInput.focus();
+                return;
+            }
+
+            try {
+                new URL(url);
+            } catch (e) {
+                showMessage('❌ Invalid URL. Use the complete format (e.g., https://example.com)', 'error');
+                return;
+            }
+
+            const apiOnline = await checkAPI();
+            if (!apiOnline) return;
+
+            document.getElementById('loading').classList.add('active');
+            document.getElementById('results').classList.remove('active');
+            document.getElementById('message').innerHTML = '';
+            document.getElementById('extractBtn').disabled = true;
+            document.getElementById('listBtn').disabled = true;
+
+            try {
+                const response = await fetch(`${API_URL}/download-fonts`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({ url: url })
+                });
+
+                const data = await response.json();
+
+                if (!response.ok) {
+                    throw new Error(data.detail || 'Error processing request');
+                }
+
+                document.getElementById('loading').classList.remove('active');
+                currentFonts = data.fonts || [];
+                displayResults(data);
+
+                if (data.fonts_downloaded > 0) {
+                    showMessage(`✅ Success! ${data.fonts_downloaded} font(s) extracted from ${url}`, 'success');
+                } else {
+                    showMessage('⚠️ No fonts found on this website. Try another site.', 'info');
+                }
+
+            } catch (error) {
+                document.getElementById('loading').classList.remove('active');
+                showMessage(`❌ Error: ${error.message}`, 'error');
+                console.error('Error:', error);
+            } finally {
+                document.getElementById('extractBtn').disabled = false;
+                document.getElementById('listBtn').disabled = false;
+            }
+        }
+
+        async function listDownloadedFonts() {
+            document.getElementById('extractBtn').disabled = true;
+            document.getElementById('listBtn').disabled = true;
+
+            try {
+                const response = await fetch(`${API_URL}/list-fonts`);
+                const data = await response.json();
+
+                if (!response.ok) {
+                    throw new Error('Error listing fonts');
+                }
+
+                if (data.total === 0) {
+                    showMessage('ℹ️ No fonts downloaded yet. Extract fonts from a website first!', 'info');
+                    return;
+                }
+
+                const fontsList = document.getElementById('fontsList');
+                fontsList.innerHTML = '';
+
+                document.getElementById('fontsFound').textContent = data.total;
+                document.getElementById('fontsDownloaded').textContent = data.total;
+
+                data.fonts.forEach(font => {
+                    const fontCard = createFontCard({
+                        name: font.filename,
+                        format: font.filename.split('.').pop(),
+                        url: font.path,
+                        local_path: font.path,
+                        size: font.size
+                    }, font.filename);
+                    fontsList.appendChild(fontCard);
+                });
+
+                document.getElementById('results').classList.add('active');
+                showMessage(`📚 Total: ${data.total} font(s) stored locally`, 'success');
+
+            } catch (error) {
+                showMessage(`❌ Error listing fonts: ${error.message}`, 'error');
+            } finally {
+                document.getElementById('extractBtn').disabled = false;
+                document.getElementById('listBtn').disabled = false;
+            }
+        }
+
+        function displayResults(data) {
+            document.getElementById('fontsFound').textContent = data.fonts_found || 0;
+            document.getElementById('fontsDownloaded').textContent = data.fonts_downloaded || 0;
+
+            const fontsList = document.getElementById('fontsList');
+            fontsList.innerHTML = '';
+
+            if (data.fonts && data.fonts.length > 0) {
+                data.fonts.forEach(font => {
+                    const filename = font.local_path.split('\\').pop().split('/').pop();
+                    const fontCard = createFontCard(font, filename);
+                    fontsList.appendChild(fontCard);
+                });
+
+                document.getElementById('results').classList.add('active');
+            } else {
+                fontsList.innerHTML = `
+                    <div class="empty-state">
+                        <div class="empty-state-icon">😔</div>
+                        <p class="empty-state-text">No fonts found on this website</p>
+                    </div>
+                `;
+                document.getElementById('results').classList.add('active');
+            }
+        }
+
+        function createFontCard(font, filename) {
+            const card = document.createElement('div');
+            card.className = 'font-card';
+            
+            const safeFilename = filename.replace(/\./g, '_');
+            const sizeText = font.size ? `${(font.size / 1024).toFixed(2)} KB` : '';
+            
+            card.innerHTML = `
+                <div class="font-card-header">
+                    <div class="font-info">
+                        <div class="font-name">${font.name}</div>
+                        <div class="font-meta">
+                            <span class="font-badge">${font.format}</span>
+                            ${sizeText ? `<span>${sizeText}</span>` : ''}
+                        </div>
+                    </div>
+                </div>
+                ${font.url ? `<div class="font-url">${font.url}</div>` : ''}
+                
+                <div class="font-actions">
+                    <button class="btn btn-primary" onclick="downloadFile('${filename}')">
+                        <span>⬇️</span>
+                        <span>Download</span>
+                    </button>
+                    <button class="btn btn-outline" onclick="showPreview('${filename}', '${font.name}')">
+                        <span>👁️</span>
+                        <span>Preview</span>
+                    </button>
+                    <button class="btn btn-outline" onclick="showConverter('${filename}')">
+                        <span>🔄</span>
+                        <span>Convert</span>
+                    </button>
+                </div>
+
+                <div class="preview-section" id="preview-${safeFilename}">
+                    <div class="preview-controls">
+                        <input type="text" 
+                               class="preview-input" 
+                               id="preview-input-${safeFilename}" 
+                               placeholder="Type text to preview..."
+                               value="The quick brown fox"
+                               onkeyup="updatePreviewText('${filename}')">
+                        <div class="preview-sizes">
+                            <button class="size-btn" onclick="changePreviewSize('${filename}', 16)">16</button>
+                            <button class="size-btn" onclick="changePreviewSize('${filename}', 24)">24</button>
+                            <button class="size-btn active" onclick="changePreviewSize('${filename}', 32)">32</button>
+                            <button class="size-btn" onclick="changePreviewSize('${filename}', 48)">48</button>
+                            <button class="size-btn" onclick="changePreviewSize('${filename}', 64)">64</button>
+                        </div>
+                    </div>
+                    <div class="preview-display">
+                        <div class="preview-text" id="preview-text-${safeFilename}" style="font-size: 32px;">The quick brown fox</div>
+                    </div>
+                </div>
+
+                <div class="converter-section" id="converter-${safeFilename}">
+                    <label class="converter-label">Convert to:</label>
+                    <div class="format-grid" id="formats-${safeFilename}"></div>
+                    <div class="btn-group">
+                        <button class="btn btn-primary" onclick="convertFont('${filename}')">
+                            <span>✨</span>
+                            <span>Convert</span>
+                        </button>
+                        <button class="btn btn-outline" onclick="hideConverter('${filename}')">
+                            <span>✕</span>
+                            <span>Cancel</span>
+                        </button>
+                    </div>
+                </div>
+            `;
+            
+            return card;
+        }
+
+        function downloadFile(filename) {
+            window.open(`${API_URL}/download-file/${filename}`, '_blank');
+            showMessage(`⬇️ Downloading: ${filename}`, 'info');
+        }
+
+        function downloadAll() {
+            if (currentFonts.length === 0) {
+                showMessage('⚠️ No fonts to download', 'error');
+                return;
+            }
+
+            currentFonts.forEach((font, index) => {
+                const filename = font.local_path.split('\\').pop().split('/').pop();
+                setTimeout(() => {
+                    downloadFile(filename);
+                }, index * 500);
+            });
+
+            showMessage(`⬇️ Downloading ${currentFonts.length} font(s)...`, 'success');
+        }
+
+        // Preview Functions
+        function showPreview(filename, fontName) {
+            const safeFilename = filename.replace(/\./g, '_');
+            const previewDiv = document.getElementById(`preview-${safeFilename}`);
+            
+            if (!previewDiv.classList.contains('active')) {
+                if (!loadedFonts[filename]) {
+                    loadFont(filename, fontName);
+                }
+                
+                previewDiv.classList.add('active');
+                applyFontToPreview(filename, fontName);
+            } else {
+                previewDiv.classList.remove('active');
+            }
+        }
+
+        function loadFont(filename, fontName) {
+            const fontUrl = `${API_URL}/download-file/${filename}`;
+            const safeFontName = fontName.replace(/[^a-zA-Z0-9]/g, '_');
+            
+            const style = document.createElement('style');
+            style.textContent = `
+                @font-face {
+                    font-family: 'Preview_${safeFontName}';
+                    src: url('${fontUrl}');
+                }
+            `;
+            document.head.appendChild(style);
+            
+            loadedFonts[filename] = `Preview_${safeFontName}`;
+        }
+
+        function applyFontToPreview(filename, fontName) {
+            const safeFilename = filename.replace(/\./g, '_');
+            const safeFontName = fontName.replace(/[^a-zA-Z0-9]/g, '_');
+            const fontFamily = `Preview_${safeFontName}`;
+            
+            const previewText = document.getElementById(`preview-text-${safeFilename}`);
+            if (previewText) {
+                previewText.style.fontFamily = `'${fontFamily}', sans-serif`;
+            }
+        }
+
+        function updatePreviewText(filename) {
+            const safeFilename = filename.replace(/\./g, '_');
+            const inputText = document.getElementById(`preview-input-${safeFilename}`).value;
+            const previewText = document.getElementById(`preview-text-${safeFilename}`);
+            
+            if (previewText && inputText) {
+                previewText.textContent = inputText;
+            }
+        }
+
+        function changePreviewSize(filename, size) {
+            const safeFilename = filename.replace(/\./g, '_');
+            const previewText = document.getElementById(`preview-text-${safeFilename}`);
+            const previewDiv = document.getElementById(`preview-${safeFilename}`);
+            
+            if (previewText) {
+                previewText.style.fontSize = `${size}px`;
+            }
+            
+            const sizeButtons = previewDiv.querySelectorAll('.size-btn');
+            sizeButtons.forEach(btn => {
+                btn.classList.remove('active');
+                if (btn.textContent === String(size)) {
+                    btn.classList.add('active');
+                }
+            });
+        }
+
+        // Converter Functions
+        function showConverter(filename) {
+            const safeFilename = filename.replace(/\./g, '_');
+            const converterDiv = document.getElementById(`converter-${safeFilename}`);
+            const formatsDiv = document.getElementById(`formats-${safeFilename}`);
+            
+            if (!converterDiv.classList.contains('active')) {
+                formatsDiv.innerHTML = '';
+                Object.keys(supportedFormats).forEach(format => {
+                    const option = document.createElement('div');
+                    option.className = 'format-option';
+                    option.textContent = format.toUpperCase();
+                    option.onclick = () => selectFormat(filename, format);
+                    formatsDiv.appendChild(option);
+                });
+                
+                converterDiv.classList.add('active');
+                selectedFormat[filename] = null;
+            } else {
+                hideConverter(filename);
+            }
+        }
+
+        function hideConverter(filename) {
+            const safeFilename = filename.replace(/\./g, '_');
+            const converterDiv = document.getElementById(`converter-${safeFilename}`);
+            converterDiv.classList.remove('active');
+            selectedFormat[filename] = null;
+        }
+
+        function selectFormat(filename, format) {
+            const safeFilename = filename.replace(/\./g, '_');
+            const formatsDiv = document.getElementById(`formats-${safeFilename}`);
+            
+            formatsDiv.querySelectorAll('.format-option').forEach(opt => {
+                opt.classList.remove('selected');
+            });
+            
+            event.target.classList.add('selected');
+            selectedFormat[filename] = format;
+        }
+
+        async function convertFont(filename) {
+            const format = selectedFormat[filename];
+            
+            if (!format) {
+                showMessage('⚠️ Please select a format first!', 'error');
+                return;
+            }
+
+            const safeFilename = filename.replace(/\./g, '_');
+            const converterDiv = document.getElementById(`converter-${safeFilename}`);
+            const originalHtml = converterDiv.innerHTML;
+            
+            try {
+                converterDiv.innerHTML = '<div style="text-align: center; padding: 1rem;"><div class="spinner" style="width: 2rem; height: 2rem; margin: 0 auto;"></div><p style="margin-top: 0.5rem; font-size: 0.875rem;">Converting...</p></div>';
+                
+                const response = await fetch(`${API_URL}/convert-font`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({
+                        filename: filename,
+                        target_format: format
+                    })
+                });
+
+                const data = await response.json();
+
+                if (!response.ok) {
+                    throw new Error(data.detail || 'Error converting font');
+                }
+
+                const downloadUrl = `${API_URL}${data.download_url}`;
+                window.open(downloadUrl, '_blank');
+                
+                showMessage(`✅ Font converted to ${format.toUpperCase()}! Download started.`, 'success');
+                hideConverter(filename);
+
+            } catch (error) {
+                converterDiv.innerHTML = originalHtml;
+                showMessage(`❌ Error converting: ${error.message}`, 'error');
+            }
+        }
+
+        function showMessage(message, type) {
+            const messageDiv = document.getElementById('message');
+            messageDiv.className = `message ${type}`;
+            
+            const icon = type === 'error' ? '❌' : type === 'success' ? '✅' : 'ℹ️';
+            messageDiv.innerHTML = `<span style="font-size: 1.25rem;">${icon}</span><span>${message}</span>`;
+            
+            setTimeout(() => {
+                messageDiv.style.opacity = '0';
+                setTimeout(() => {
+                    messageDiv.className = '';
+                    messageDiv.innerHTML = '';
+                    messageDiv.style.opacity = '1';
+                }, 300);
+            }, 5000);
+        }
+
+        // Enter key support
+        document.getElementById('urlInput').addEventListener('keypress', function(e) {
+            if (e.key === 'Enter') {
+                downloadFonts();
+            }
+        });
+    </script>
+</body>
+</html>

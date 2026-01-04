@@ -1,0 +1,9 @@
+fastapi>=0.115.0
+uvicorn[standard]>=0.32.0
+requests>=2.31.0
+beautifulsoup4>=4.12.3
+cssutils>=2.9.0
+pydantic>=2.10.0
+python-multipart>=0.0.6
+fonttools>=4.47.0
+brotli>=1.1.0
