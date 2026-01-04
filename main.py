@@ -119,6 +119,14 @@ async def root():
         }
     }
 
+@app.get("/health")
+async def health_check():
+    return {
+        "status": "healthy",
+        "message": "Font Extractor API is running",
+        "version": "2.0.0"
+    }
+
 @app.post("/extract-fonts")
 async def extract_fonts(request: URLRequest):
     """
