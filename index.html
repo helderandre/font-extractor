@@ -1403,7 +1403,9 @@
             const originalHtml = converterDiv.innerHTML;
             
             try {
-                converterDiv.innerHTML = '<div style="text-align: center; padding: 1rem;"><div class="spinner" style="width: 2rem; height: 2rem; margin: 0 auto;"></div><p style="margin-top: 0.5rem; font-size: 0.875rem;">Converting...</p></div>';
+                // Step 1: Loading from IndexedDB
+                converterDiv.innerHTML = '<div style="text-align: center; padding: 1rem;"><div class="spinner" style="width: 2rem; height: 2rem; margin: 0 auto;"></div><p style="margin-top: 0.5rem; font-size: 0.875rem;">📦 Loading font from browser...</p></div>';
+                showMessage('📦 Step 1/4: Loading font from browser storage...', 'info');
                 
                 // Get font from IndexedDB
                 console.log('Looking for font in IndexedDB:', filename);
@@ -1428,6 +1430,10 @@
                     dataLength: fontData.data.length
                 });
 
+                // Step 2: Sending to server
+                converterDiv.innerHTML = '<div style="text-align: center; padding: 1rem;"><div class="spinner" style="width: 2rem; height: 2rem; margin: 0 auto;"></div><p style="margin-top: 0.5rem; font-size: 0.875rem;">☁️ Sending to server...</p></div>';
+                showMessage(`☁️ Step 2/4: Sending ${fontData.format.toUpperCase()} to server for conversion...`, 'info');
+
                 // Prepare request
                 const response = await fetch(`${API_URL}/convert-font`, {
                     method: 'POST',
@@ -1442,6 +1448,10 @@
                     })
                 });
 
+                // Step 3: Processing
+                converterDiv.innerHTML = '<div style="text-align: center; padding: 1rem;"><div class="spinner" style="width: 2rem; height: 2rem; margin: 0 auto;"></div><p style="margin-top: 0.5rem; font-size: 0.875rem;">⚙️ Converting format...</p></div>';
+                showMessage(`⚙️ Step 3/4: Converting ${fontData.format.toUpperCase()} → ${format.toUpperCase()}...`, 'info');
+
                 const data = await response.json();
 
                 if (!response.ok) {
@@ -1450,7 +1460,12 @@
 
                 console.log('Conversion successful:', data.message);
 
+                // Step 4: Preparing download
+                converterDiv.innerHTML = '<div style="text-align: center; padding: 1rem;"><div class="spinner" style="width: 2rem; height: 2rem; margin: 0 auto;"></div><p style="margin-top: 0.5rem; font-size: 0.875rem;">⬇️ Preparing download...</p></div>';
+                showMessage('⬇️ Step 4/4: Preparing download...', 'info');
+
                 // Convert base64 response to blob and download
+                console.log('Converting base64 to blob for download...');
                 const byteCharacters = atob(data.font_data);
                 const byteNumbers = new Array(byteCharacters.length);
                 for (let i = 0; i < byteCharacters.length; i++) {
@@ -1459,19 +1474,29 @@
                 const byteArray = new Uint8Array(byteNumbers);
                 const blob = new Blob([byteArray], { type: 'font/' + format });
                 
+                console.log('Blob created, size:', blob.size, 'bytes');
                 const downloadUrl = URL.createObjectURL(blob);
+                const downloadFilename = `${filename.split('.')[0]}.${format}`;
+                
                 const a = document.createElement('a');
                 a.href = downloadUrl;
-                a.download = `${filename.split('.')[0]}.${format}`;
+                a.download = downloadFilename;
                 document.body.appendChild(a);
+                console.log('Triggering download:', downloadFilename);
                 a.click();
                 document.body.removeChild(a);
                 URL.revokeObjectURL(downloadUrl);
                 
-                showMessage(`✅ Font converted to ${format.toUpperCase()}! Download started.`, 'success');
-                hideConverter(filename);
+                console.log('✅ Download triggered successfully');
+                showMessage(`✅ Success! ${downloadFilename} is downloading now!`, 'success');
+                
+                // Wait a bit before hiding converter to show success message
+                setTimeout(() => {
+                    hideConverter(filename);
+                }, 2000);
 
             } catch (error) {
+                console.error('Conversion error:', error);
                 converterDiv.innerHTML = originalHtml;
                 showMessage(`❌ Error converting: ${error.message}`, 'error');
             }
