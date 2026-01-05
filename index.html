@@ -983,8 +983,7 @@
 
             if (data.fonts && data.fonts.length > 0) {
                 data.fonts.forEach(font => {
-                    const filename = font.local_path.split('\\').pop().split('/').pop();
-                    const fontCard = createFontCard(font, filename);
+                    const fontCard = createFontCard(font, font.name);
                     fontsList.appendChild(fontCard);
                 });
 
