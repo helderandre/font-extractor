@@ -1,6 +1,6 @@
 from fastapi import FastAPI, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
-from fastapi.responses import StreamingResponse, JSONResponse
+from fastapi.responses import StreamingResponse, JSONResponse, HTMLResponse, FileResponse
 from pydantic import BaseModel, HttpUrl
 import requests
 from bs4 import BeautifulSoup
@@ -11,6 +11,7 @@ import logging
 from fontTools import ttLib
 import io
 import base64
+import os
 
 # Desabilitar logs do cssutils
 cssutils.log.setLevel(logging.CRITICAL)
@@ -104,8 +105,25 @@ def extract_fonts_from_css(css_content: str, base_url: str) -> list:
     
     return fonts
 
-@app.get("/")
+@app.get("/", response_class=HTMLResponse)
 async def root():
+    """Serve the frontend HTML"""
+    try:
+        with open("index.html", "r", encoding="utf-8") as f:
+            return f.read()
+    except FileNotFoundError:
+        return HTMLResponse(content="""
+            <html>
+                <body>
+                    <h1>Font Extractor API</h1>
+                    <p>Frontend not found. Visit <a href="/docs">/docs</a> for API documentation.</p>
+                </body>
+            </html>
+        """, status_code=200)
+
+@app.get("/api/info")
+async def api_info():
+    """API information endpoint"""
     return {
         "message": "Font Extractor API - Serverless Mode",
         "version": "2.0.0",
