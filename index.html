@@ -796,12 +796,18 @@
 
         <!-- Footer -->
         <footer class="footer">
-            <p>Built with Python + FastAPI | <a href="http://localhost:8000/docs" target="_blank">API Documentation</a></p>
+            <p>Built with Python + FastAPI | <a href="/docs" target="_blank">API Documentation</a></p>
         </footer>
     </div>
 
     <script>
-        const API_URL = 'http://localhost:8000';
+        // Auto-detect API URL (use current origin in production, localhost in development)
+        const API_URL = window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1' 
+            ? 'http://localhost:8000' 
+            : window.location.origin;
+        
+        console.log('Using API URL:', API_URL);
+        
         let currentFonts = [];
         let supportedFormats = {};
         let selectedFormat = {};
