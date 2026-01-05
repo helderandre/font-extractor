@@ -228,6 +228,11 @@
             box-shadow: var(--shadow-md);
         }
 
+        .btn-primary.downloaded {
+            background: oklch(0.7 0.15 145);
+            pointer-events: none;
+        }
+
         .btn-secondary {
             background: var(--secondary);
             color: var(--secondary-foreground);
@@ -1024,8 +1029,9 @@
             fontsList.innerHTML = '';
 
             if (data.fonts && data.fonts.length > 0) {
-                data.fonts.forEach(font => {
-                    const fontCard = createFontCard(font, font.name);
+                // Create cards asynchronously to check IndexedDB
+                data.fonts.forEach(async font => {
+                    const fontCard = await createFontCardAsync(font, font.name);
                     fontsList.appendChild(fontCard);
                 });
 
@@ -1039,6 +1045,30 @@
                 `;
                 document.getElementById('results').classList.add('active');
             }
+        }
+
+        async function createFontCardAsync(font, filename) {
+            // Check if font is already in IndexedDB
+            let isDownloaded = false;
+            try {
+                const fontData = await getFontFromIndexedDB(filename);
+                isDownloaded = !!(fontData && fontData.data);
+            } catch (e) {
+                console.log('Error checking IndexedDB:', e);
+            }
+
+            const card = createFontCard(font, filename);
+            
+            // Add visual indicator if already downloaded
+            if (isDownloaded) {
+                const downloadBtn = card.querySelector('.btn-primary');
+                if (downloadBtn) {
+                    downloadBtn.innerHTML = '<span>✅</span><span>Downloaded</span>';
+                    downloadBtn.classList.add('downloaded');
+                }
+            }
+            
+            return card;
         }
 
         function createFontCard(font, filename) {
@@ -1124,6 +1154,7 @@
                     return;
                 }
 
+                console.log('Downloading font:', filename, font);
                 showMessage(`⬇️ Downloading ${filename}...`, 'info');
 
                 // Download font via proxy
@@ -1154,14 +1185,17 @@
                 const base64 = btoa(binary);
 
                 // Save to IndexedDB
-                await saveFontToIndexedDB({
+                const fontToSave = {
                     name: filename,
                     format: font.format,
                     url: font.url,
                     data: base64,
                     size: arrayBuffer.byteLength,
                     downloadedAt: new Date().toISOString()
-                });
+                };
+                console.log('Saving to IndexedDB:', fontToSave.name, 'size:', fontToSave.size);
+                await saveFontToIndexedDB(fontToSave);
+                console.log('✅ Saved to IndexedDB successfully');
 
                 // Also trigger browser download
                 const downloadUrl = URL.createObjectURL(blob);
@@ -1175,6 +1209,17 @@
                 a.click();
                 document.body.removeChild(a);
                 URL.revokeObjectURL(downloadUrl);
+
+                // Update button to show "Downloaded"
+                const safeFilename = filename.replace(/\./g, '_');
+                const fontCard = document.querySelector(`#preview-${safeFilename}`)?.parentElement;
+                if (fontCard) {
+                    const downloadBtn = fontCard.querySelector('.btn-primary');
+                    if (downloadBtn) {
+                        downloadBtn.innerHTML = '<span>✅</span><span>Downloaded</span>';
+                        downloadBtn.classList.add('downloaded');
+                    }
+                }
 
                 showMessage(`✅ ${filename} downloaded and saved!`, 'success');
             } catch (error) {
@@ -1361,10 +1406,19 @@
                 converterDiv.innerHTML = '<div style="text-align: center; padding: 1rem;"><div class="spinner" style="width: 2rem; height: 2rem; margin: 0 auto;"></div><p style="margin-top: 0.5rem; font-size: 0.875rem;">Converting...</p></div>';
                 
                 // Get font from IndexedDB
+                console.log('Looking for font in IndexedDB:', filename);
                 const fontData = await getFontFromIndexedDB(filename);
+                console.log('Font data from IndexedDB:', fontData ? 'found' : 'not found');
                 
                 if (!fontData || !fontData.data) {
-                    throw new Error('Font not found in storage. Please download it first.');
+                    // List available fonts for debugging
+                    const db = await openFontDB();
+                    const tx = db.transaction(['fonts'], 'readonly');
+                    const store = tx.objectStore('fonts');
+                    const allFonts = await store.getAll();
+                    console.log('Available fonts in IndexedDB:', allFonts.map(f => f.name));
+                    
+                    throw new Error('⚠️ Font not downloaded yet! Click the "Download" button first to save it to your browser, then try converting.');
                 }
 
                 console.log('Converting font:', {
