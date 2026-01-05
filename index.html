@@ -875,23 +875,33 @@
             const db = await openFontDB();
             const tx = db.transaction(['fonts'], 'readwrite');
             const store = tx.objectStore('fonts');
-            await store.put(font);
-            return tx.complete;
+            const request = store.put(font);
+            return new Promise((resolve, reject) => {
+                request.onsuccess = () => resolve(request.result);
+                request.onerror = () => reject(request.error);
+            });
         }
 
         async function getFontFromIndexedDB(fontName) {
             const db = await openFontDB();
             const tx = db.transaction(['fonts'], 'readonly');
             const store = tx.objectStore('fonts');
-            return store.get(fontName);
+            const request = store.get(fontName);
+            return new Promise((resolve, reject) => {
+                request.onsuccess = () => resolve(request.result);
+                request.onerror = () => reject(request.error);
+            });
         }
 
         async function deleteFontFromIndexedDB(fontName) {
             const db = await openFontDB();
             const tx = db.transaction(['fonts'], 'readwrite');
             const store = tx.objectStore('fonts');
-            await store.delete(fontName);
-            return tx.complete;
+            const request = store.delete(fontName);
+            return new Promise((resolve, reject) => {
+                request.onsuccess = () => resolve(request.result);
+                request.onerror = () => reject(request.error);
+            });
         }
 
         // Check API status
@@ -987,7 +997,11 @@
                 const db = await openFontDB();
                 const tx = db.transaction(['fonts'], 'readonly');
                 const store = tx.objectStore('fonts');
-                const allFonts = await store.getAll();
+                const request = store.getAll();
+                const allFonts = await new Promise((resolve, reject) => {
+                    request.onsuccess = () => resolve(request.result);
+                    request.onerror = () => reject(request.error);
+                });
 
                 if (allFonts.length === 0) {
                     showMessage('ℹ️ No fonts stored yet. Extract fonts from a website and download them first!', 'info');
@@ -1414,11 +1428,19 @@
                 
                 if (!fontData || !fontData.data) {
                     // List available fonts for debugging
-                    const db = await openFontDB();
-                    const tx = db.transaction(['fonts'], 'readonly');
-                    const store = tx.objectStore('fonts');
-                    const allFonts = await store.getAll();
-                    console.log('Available fonts in IndexedDB:', allFonts.map(f => f.name));
+                    try {
+                        const db = await openFontDB();
+                        const tx = db.transaction(['fonts'], 'readonly');
+                        const store = tx.objectStore('fonts');
+                        const request = store.getAll();
+                        const allFonts = await new Promise((resolve, reject) => {
+                            request.onsuccess = () => resolve(request.result);
+                            request.onerror = () => reject(request.error);
+                        });
+                        console.log('Available fonts in IndexedDB:', allFonts.map(f => f.name));
+                    } catch (e) {
+                        console.log('Error listing fonts:', e);
+                    }
                     
                     throw new Error('⚠️ Font not downloaded yet! Click the "Download" button first to save it to your browser, then try converting.');
                 }
