@@ -745,13 +745,13 @@
             </div>
             
             <div class="btn-group">
-                <button class="btn btn-primary" onclick="downloadFonts()" id="extractBtn">
+                <button class="btn btn-primary" onclick="extractFonts()" id="extractBtn">
                     <span>🚀</span>
                     <span>Extract Fonts</span>
                 </button>
-                <button class="btn btn-outline" onclick="listDownloadedFonts()" id="listBtn">
+                <button class="btn btn-outline" onclick="viewStoredFonts()" id="listBtn">
                     <span>📋</span>
-                    <span>View Downloaded</span>
+                    <span>View Stored Fonts</span>
                 </button>
             </div>
         </section>
@@ -870,7 +870,7 @@
             document.getElementById('urlInput').focus();
         }
 
-        async function downloadFonts() {
+        async function extractFonts() {
             const urlInput = document.getElementById('urlInput');
             const url = urlInput.value.trim();
 
@@ -897,7 +897,7 @@
             document.getElementById('listBtn').disabled = true;
 
             try {
-                const response = await fetch(`${API_URL}/download-fonts`, {
+                const response = await fetch(`${API_URL}/extract-fonts`, {
                     method: 'POST',
                     headers: {
                         'Content-Type': 'application/json',
@@ -915,8 +915,8 @@
                 currentFonts = data.fonts || [];
                 displayResults(data);
 
-                if (data.fonts_downloaded > 0) {
-                    showMessage(`✅ Success! ${data.fonts_downloaded} font(s) extracted from ${url}`, 'success');
+                if (data.fonts_found > 0) {
+                    showMessage(`✅ Success! ${data.fonts_found} font(s) found on ${url}. Click "Download" to save to your browser.`, 'success');
                 } else {
                     showMessage('⚠️ No fonts found on this website. Try another site.', 'info');
                 }
@@ -931,42 +931,40 @@
             }
         }
 
-        async function listDownloadedFonts() {
+        async function viewStoredFonts() {
             document.getElementById('extractBtn').disabled = true;
             document.getElementById('listBtn').disabled = true;
 
             try {
-                const response = await fetch(`${API_URL}/list-fonts`);
-                const data = await response.json();
+                // Get fonts from IndexedDB
+                const db = await openFontDB();
+                const tx = db.transaction(['fonts'], 'readonly');
+                const store = tx.objectStore('fonts');
+                const allFonts = await store.getAll();
 
-                if (!response.ok) {
-                    throw new Error('Error listing fonts');
-                }
-
-                if (data.total === 0) {
-                    showMessage('ℹ️ No fonts downloaded yet. Extract fonts from a website first!', 'info');
+                if (allFonts.length === 0) {
+                    showMessage('ℹ️ No fonts stored yet. Extract fonts from a website and download them first!', 'info');
                     return;
                 }
 
                 const fontsList = document.getElementById('fontsList');
                 fontsList.innerHTML = '';
 
-                document.getElementById('fontsFound').textContent = data.total;
-                document.getElementById('fontsDownloaded').textContent = data.total;
+                document.getElementById('fontsFound').textContent = allFonts.length;
+                document.getElementById('fontsDownloaded').textContent = allFonts.length;
 
-                data.fonts.forEach(font => {
+                allFonts.forEach(font => {
                     const fontCard = createFontCard({
-                        name: font.filename,
-                        format: font.filename.split('.').pop(),
-                        url: font.path,
-                        local_path: font.path,
-                        size: font.size
-                    }, font.filename);
+                        name: font.name,
+                        format: font.format,
+                        url: font.url,
+                        size: font.data ? font.data.length : 0
+                    }, font.name);
                     fontsList.appendChild(fontCard);
                 });
 
                 document.getElementById('results').classList.add('active');
-                showMessage(`📚 Total: ${data.total} font(s) stored locally`, 'success');
+                showMessage(`📚 Total: ${allFonts.length} font(s) stored in your browser`, 'success');
 
             } catch (error) {
                 showMessage(`❌ Error listing fonts: ${error.message}`, 'error');
@@ -1275,7 +1273,7 @@
         // Enter key support
         document.getElementById('urlInput').addEventListener('keypress', function(e) {
             if (e.key === 'Enter') {
-                downloadFonts();
+                extractFonts();
             }
         });
     </script>
