@@ -1,0 +1,60 @@
+# .dockerignore - Arquivos a ignorar no build
+
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.Python
+*.egg-info/
+dist/
+build/
+
+# Virtual Environment
+.venv/
+venv/
+ENV/
+env/
+
+# Fontes baixadas (não precisam ir pro Docker)
+downloaded_fonts/
+converted_fonts/
+*.woff
+*.woff2
+*.ttf
+*.otf
+*.eot
+*.svg
+
+# Git
+.git/
+.gitignore
+.gitattributes
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+
+# Documentation
+README.md
+CONTRIBUTING.md
+LICENSE
+screenshots/
+
+# Backup files
+*_backup.*
+*.bak
+main_old.py
+main_new.py
+index_backup.html
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Docker
+docker-compose.yml
+Dockerfile
+.dockerignore

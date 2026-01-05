@@ -23,22 +23,31 @@ A modern, professional tool to extract, preview, and convert web fonts with a be
 - **Multiple Formats** - Supports WOFF, WOFF2, TTF, OTF, EOT, and SVG
 - **Smart Detection** - Automatically finds all `@font-face` declarations
 - **Duplicate Removal** - Intelligent deduplication based on URL hashing
+- **CORS Proxy** - Built-in proxy to bypass CORS restrictions
 
 ### 🔄 Font Conversion
 - **Format Conversion** - Convert between TTF, OTF, WOFF, WOFF2, EOT, and SVG
-- **One-Click Download** - Instant download of converted fonts
-- **Batch Processing** - Convert multiple fonts at once
+- **Client-Side Storage** - Fonts stored in browser (IndexedDB)
+- **No Server Storage** - Serverless architecture, no files stored on server
+- **Instant Conversion** - Fast base64-based conversion
 
 ### 👁️ Live Preview
 - **Real-time Preview** - See fonts rendered immediately with custom text
 - **Adjustable Sizes** - Preview at 16px, 24px, 32px, 48px, and 64px
 - **Custom Text** - Type any text to preview the font style
+- **Offline Support** - Works offline after fonts are downloaded
 
 ### 🎨 Modern UI/UX
 - **Minimalist Design** - Professional, clean interface using OKLCH color system
 - **Dark/Light Mode** - Seamless theme switching with smooth transitions
 - **Responsive** - Works perfectly on desktop, tablet, and mobile
 - **Accessibility** - WCAG compliant with proper contrast ratios
+
+### 🚀 Deployment Ready
+- **Docker Support** - Pre-configured Dockerfile and docker-compose
+- **Serverless Architecture** - No persistent storage required
+- **Free Hosting** - Compatible with Vercel, Railway, Render free tiers
+- **Health Checks** - Built-in health endpoint for monitoring
 
 ---
 
@@ -75,6 +84,8 @@ A modern, professional tool to extract, preview, and convert web fonts with a be
 
 ### Running the Application
 
+**Option 1: Local Development**
+
 1. **Start the API server**
    ```bash
    python main.py
@@ -86,13 +97,44 @@ A modern, professional tool to extract, preview, and convert web fonts with a be
    
    Open `index.html` in your browser, or simply double-click the file.
 
+**Option 2: Docker (Recommended for Production)**
+
+1. **Using Docker Compose** (easiest)
+   ```bash
+   docker-compose up -d
+   ```
+
+2. **Using Docker directly**
+   ```bash
+   # Build image
+   docker build -t font-extractor .
+   
+   # Run container
+   docker run -d -p 8000:8000 --name font-extractor font-extractor
+   ```
+
+3. **Access the application**
+   - API: `http://localhost:8000`
+   - Docs: `http://localhost:8000/docs`
+   - Open `index.html` in your browser
+
+4. **Stop the container**
+   ```bash
+   docker-compose down
+   # or
+   docker stop font-extractor
+   ```
+
 ### Usage
 
 1. **Enter a website URL** (e.g., `https://fonts.google.com`)
-2. **Click "Extract Fonts"** to analyze and download fonts
-3. **Preview fonts** with custom text and sizes
-4. **Convert fonts** to different formats
-5. **Download** fonts individually or all at once
+2. **Click "Extract Fonts"** to analyze and find font URLs
+3. **Fonts are downloaded to your browser** (IndexedDB)
+4. **Preview fonts** with custom text and sizes
+5. **Convert fonts** to different formats (processed server-side, returned to browser)
+6. **Download** fonts from your browser storage
+
+**Note:** All fonts are stored in your browser's IndexedDB. No files are stored on the server.
 
 Try these popular sites:
 - [Google Fonts](https://fonts.google.com)
@@ -106,10 +148,19 @@ Try these popular sites:
 
 The API provides RESTful endpoints for font extraction and management.
 
+### Architecture
+
+**Serverless Design:**
+- ✅ API only processes and returns data
+- ✅ Fonts stored in browser (IndexedDB)
+- ✅ Conversion done server-side but returned as base64
+- ✅ No persistent storage on server
+- ✅ Scalable and cost-effective
+
 ### Endpoints
 
-#### `POST /download-fonts`
-Extract and download fonts from a website.
+#### `POST /extract-fonts`
+Extract font URLs from a website (no download).
 
 **Request Body:**
 ```json
@@ -124,40 +175,48 @@ Extract and download fonts from a website.
   "success": true,
   "url": "https://example.com",
   "fonts_found": 5,
-  "fonts_downloaded": 5,
   "fonts": [
     {
       "name": "Roboto",
       "format": "woff2",
-      "url": "https://fonts.gstatic.com/...",
-      "local_path": "downloaded_fonts/Roboto_a1b2c3d4.woff2"
+      "url": "https://fonts.gstatic.com/..."
     }
   ]
 }
 ```
 
-#### `GET /list-fonts`
-List all downloaded fonts with metadata.
-
 #### `POST /convert-font`
-Convert a font to a different format.
+Convert a font to a different format (base64 input/output).
 
 **Request Body:**
 ```json
 {
-  "filename": "Roboto_a1b2c3d4.woff2",
-  "target_format": "ttf"
+  "font_data": "base64_encoded_font...",
+  "source_format": "woff2",
+  "target_format": "ttf",
+  "font_name": "Roboto"
 }
 ```
+
+**Response:**
+```json
+{
+  "success": true,
+  "font_name": "Roboto",
+  "source_format": "woff2",
+  "target_format": "ttf",
+  "font_data": "base64_converted_font..."
+}
+```
+
+#### `GET /proxy-font?url={font_url}`
+Proxy to download fonts bypassing CORS restrictions.
 
 #### `GET /supported-formats`
 Get list of all supported font formats for conversion.
 
-#### `GET /download-file/{filename}`
-Download a specific font file.
-
-#### `GET /download-converted/{filename}`
-Download a converted font file.
+#### `GET /health`
+Health check endpoint (for monitoring/deployment).
 
 #### `GET /docs`
 Interactive API documentation (Swagger UI).
@@ -177,14 +236,17 @@ Once the server is running, visit:
 
 ```
 font-extractor/
-├── 📄 main.py                  # FastAPI backend application
-├── 🌐 index.html               # Frontend web interface
+├── 📄 main.py                  # FastAPI backend (serverless)
+├── 🌐 index.html               # Frontend with IndexedDB
 ├── 📋 requirements.txt         # Python dependencies
-├── 📖 README.md                # Project documentation
-├── 📁 downloaded_fonts/        # Downloaded fonts (auto-created)
-├── 📁 converted_fonts/         # Converted fonts (auto-created)
-└── 📁 .venv/                   # Virtual environment (optional)
+├── 📖 README.md                # Documentation
+├── 🐳 Dockerfile               # Docker configuration
+├── 🐳 docker-compose.yml       # Docker Compose setup
+├── 📁 screenshots/             # Project screenshots
+└── 📁 .venv/                   # Virtual environment (local dev)
 ```
+
+**Note:** No `downloaded_fonts/` or `converted_fonts/` directories - everything is client-side!
 
 ---
 
@@ -226,6 +288,7 @@ font-extractor/
 
 ### Frontend
 - **Vanilla JavaScript** - No frameworks, pure JS
+- **IndexedDB** - Client-side font storage (up to ~50MB per origin)
 - **OKLCH Color System** - Modern color space for better color management
 - **Google Fonts (Manrope)** - Clean, professional typography
 - **CSS Custom Properties** - Dynamic theming system
@@ -234,13 +297,33 @@ font-extractor/
 
 ## 🔍 How It Works
 
-1. **HTML Analysis** - The API fetches and parses the target website's HTML
+### Serverless Architecture
+
+1. **HTML Analysis** - API fetches and parses the target website's HTML
 2. **CSS Extraction** - Searches for inline CSS, external stylesheets, and `@import` rules
 3. **Font-Face Parsing** - Uses cssutils to extract all `@font-face` declarations
-4. **Smart Download** - Downloads each unique font with hash-based naming
-5. **Local Storage** - Saves fonts in `downloaded_fonts/` directory
-6. **Format Conversion** - Converts fonts using fonttools TTFont library
-7. **Preview Generation** - Dynamically loads fonts with `@font-face` for live preview
+4. **URL Extraction** - Returns font URLs to client (no server-side download)
+5. **Client Download** - Browser downloads fonts directly or via CORS proxy
+6. **IndexedDB Storage** - Fonts stored in browser's IndexedDB (persistent)
+7. **Format Conversion** - Font sent to API as base64, converted, returned as base64
+8. **Preview Generation** - Dynamically loads fonts with `@font-face` for live preview
+
+### Data Flow
+
+```
+User → Website URL → API (extract) → Font URLs → Client
+                                                    ↓
+Client Downloads Fonts → IndexedDB → Preview/Convert → Download
+                              ↑
+                    API (convert base64)
+```
+
+**Benefits:**
+- 🚀 **Scalable** - No server storage needed
+- 💰 **Cost-effective** - Minimal server resources
+- 🔒 **Privacy** - Fonts stay in user's browser
+- ⚡ **Fast** - No server I/O operations
+- 🌐 **Offline** - Works offline after initial download
 
 ---
 
@@ -290,12 +373,65 @@ uvicorn main:app --reload
 
 ## ⚠️ Important Notes
 
-- **CORS**: The API has CORS enabled for local development
+- **CORS**: The API has CORS enabled and includes proxy endpoint for CORS bypass
 - **Rate Limiting**: Some websites may block automated requests
 - **Legal**: Respect font licenses and copyright when downloading
-- **Storage**: Fonts are stored locally; clean up periodically
+- **Storage**: Fonts stored in browser IndexedDB (~50MB limit per origin)
 - **Formats**: Not all conversion combinations are supported
 - **Browser Compatibility**: Best viewed in modern browsers (Chrome, Firefox, Edge, Safari)
+- **No Server Storage**: API is stateless - nothing stored on server
+
+---
+
+## 🚀 Deployment
+
+### Deploy to Railway
+
+1. **Fork this repository**
+
+2. **Create new project on Railway**
+   ```bash
+   # Install Railway CLI
+   npm install -g @railway/cli
+   
+   # Login
+   railway login
+   
+   # Initialize project
+   railway init
+   
+   # Deploy
+   railway up
+   ```
+
+3. **Or use Railway Button**
+   
+   [![Deploy on Railway](https://railway.app/button.svg)](https://railway.app/new/template?template=https://github.com/helderandre/font-extractor)
+
+### Deploy to Render
+
+1. **Create new Web Service**
+2. **Connect your GitHub repository**
+3. **Configure:**
+   - Build Command: `pip install -r requirements.txt`
+   - Start Command: `uvicorn main:app --host 0.0.0.0 --port $PORT`
+
+### Deploy with Docker
+
+```bash
+# Build
+docker build -t font-extractor .
+
+# Run
+docker run -d -p 8000:8000 font-extractor
+
+# Or use docker-compose
+docker-compose up -d
+```
+
+### Environment Variables
+
+No environment variables required! The API is fully self-contained.
 
 ---
 
