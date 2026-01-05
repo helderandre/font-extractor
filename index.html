@@ -847,6 +847,48 @@
 
         loadSupportedFormats();
 
+        // IndexedDB Functions
+        function openFontDB() {
+            return new Promise((resolve, reject) => {
+                const request = indexedDB.open('FontExtractorDB', 1);
+                
+                request.onerror = () => reject(request.error);
+                request.onsuccess = () => resolve(request.result);
+                
+                request.onupgradeneeded = (event) => {
+                    const db = event.target.result;
+                    if (!db.objectStoreNames.contains('fonts')) {
+                        const objectStore = db.createObjectStore('fonts', { keyPath: 'name' });
+                        objectStore.createIndex('format', 'format', { unique: false });
+                        objectStore.createIndex('url', 'url', { unique: false });
+                    }
+                };
+            });
+        }
+
+        async function saveFontToIndexedDB(font) {
+            const db = await openFontDB();
+            const tx = db.transaction(['fonts'], 'readwrite');
+            const store = tx.objectStore('fonts');
+            await store.put(font);
+            return tx.complete;
+        }
+
+        async function getFontFromIndexedDB(fontName) {
+            const db = await openFontDB();
+            const tx = db.transaction(['fonts'], 'readonly');
+            const store = tx.objectStore('fonts');
+            return store.get(fontName);
+        }
+
+        async function deleteFontFromIndexedDB(fontName) {
+            const db = await openFontDB();
+            const tx = db.transaction(['fonts'], 'readwrite');
+            const store = tx.objectStore('fonts');
+            await store.delete(fontName);
+            return tx.complete;
+        }
+
         // Check API status
         async function checkAPI() {
             try {
@@ -1073,9 +1115,54 @@
             return card;
         }
 
-        function downloadFile(filename) {
-            window.open(`${API_URL}/download-file/${filename}`, '_blank');
-            showMessage(`⬇️ Downloading: ${filename}`, 'info');
+        async function downloadFile(filename) {
+            try {
+                // Find font in currentFonts array
+                const font = currentFonts.find(f => f.name === filename);
+                if (!font) {
+                    showMessage('❌ Font not found', 'error');
+                    return;
+                }
+
+                showMessage(`⬇️ Downloading ${filename}...`, 'info');
+
+                // Download font via proxy
+                const proxyUrl = `${API_URL}/proxy-font?url=${encodeURIComponent(font.url)}`;
+                const response = await fetch(proxyUrl);
+                
+                if (!response.ok) {
+                    throw new Error('Failed to download font');
+                }
+
+                const blob = await response.blob();
+                const arrayBuffer = await blob.arrayBuffer();
+                const base64 = btoa(String.fromCharCode(...new Uint8Array(arrayBuffer)));
+
+                // Save to IndexedDB
+                await saveFontToIndexedDB({
+                    name: filename,
+                    format: font.format,
+                    url: font.url,
+                    data: base64,
+                    size: arrayBuffer.byteLength,
+                    downloadedAt: new Date().toISOString()
+                });
+
+                // Also trigger browser download
+                const downloadUrl = URL.createObjectURL(blob);
+                const a = document.createElement('a');
+                a.href = downloadUrl;
+                a.download = filename;
+                document.body.appendChild(a);
+                a.click();
+                document.body.removeChild(a);
+                URL.revokeObjectURL(downloadUrl);
+
+                showMessage(`✅ ${filename} downloaded and saved!`, 'success');
+            } catch (error) {
+                showMessage(`❌ Error downloading: ${error.message}`, 'error');
+                console.error('Download error:', error);
+            }
         }
 
         function downloadAll() {
@@ -1085,9 +1172,8 @@
             }
 
             currentFonts.forEach((font, index) => {
-                const filename = font.local_path.split('\\').pop().split('/').pop();
                 setTimeout(() => {
-                    downloadFile(filename);
+                    downloadFile(font.name);
                 }, index * 500);
             });
 
@@ -1111,20 +1197,49 @@
             }
         }
 
-        function loadFont(filename, fontName) {
-            const fontUrl = `${API_URL}/download-file/${filename}`;
-            const safeFontName = fontName.replace(/[^a-zA-Z0-9]/g, '_');
-            
-            const style = document.createElement('style');
-            style.textContent = `
-                @font-face {
-                    font-family: 'Preview_${safeFontName}';
-                    src: url('${fontUrl}');
+        async function loadFont(filename, fontName) {
+            try {
+                // Try to get from IndexedDB first
+                const fontData = await getFontFromIndexedDB(filename);
+                
+                let fontUrl;
+                if (fontData && fontData.data) {
+                    // Convert base64 to blob URL
+                    const byteCharacters = atob(fontData.data);
+                    const byteNumbers = new Array(byteCharacters.length);
+                    for (let i = 0; i < byteCharacters.length; i++) {
+                        byteNumbers[i] = byteCharacters.charCodeAt(i);
+                    }
+                    const byteArray = new Uint8Array(byteNumbers);
+                    const blob = new Blob([byteArray], { type: 'font/' + fontData.format });
+                    fontUrl = URL.createObjectURL(blob);
+                } else {
+                    // If not in IndexedDB, use the original URL from currentFonts
+                    const font = currentFonts.find(f => f.name === filename);
+                    if (font) {
+                        fontUrl = `${API_URL}/proxy-font?url=${encodeURIComponent(font.url)}`;
+                    } else {
+                        console.error('Font not found:', filename);
+                        return;
+                    }
                 }
-            `;
-            document.head.appendChild(style);
-            
-            loadedFonts[filename] = `Preview_${safeFontName}`;
+
+                const safeFontName = fontName.replace(/[^a-zA-Z0-9]/g, '_');
+                
+                const style = document.createElement('style');
+                style.textContent = `
+                    @font-face {
+                        font-family: 'Preview_${safeFontName}';
+                        src: url('${fontUrl}');
+                    }
+                `;
+                document.head.appendChild(style);
+                
+                loadedFonts[filename] = `Preview_${safeFontName}`;
+            } catch (error) {
+                console.error('Error loading font:', error);
+                showMessage(`❌ Error loading font for preview: ${error.message}`, 'error');
+            }
         }
 
         function applyFontToPreview(filename, fontName) {
@@ -1223,14 +1338,24 @@
             try {
                 converterDiv.innerHTML = '<div style="text-align: center; padding: 1rem;"><div class="spinner" style="width: 2rem; height: 2rem; margin: 0 auto;"></div><p style="margin-top: 0.5rem; font-size: 0.875rem;">Converting...</p></div>';
                 
+                // Get font from IndexedDB
+                const fontData = await getFontFromIndexedDB(filename);
+                
+                if (!fontData || !fontData.data) {
+                    throw new Error('Font not found in storage. Please download it first.');
+                }
+
+                // Prepare request
                 const response = await fetch(`${API_URL}/convert-font`, {
                     method: 'POST',
                     headers: {
                         'Content-Type': 'application/json',
                     },
                     body: JSON.stringify({
-                        filename: filename,
-                        target_format: format
+                        font_data: fontData.data,
+                        source_format: fontData.format,
+                        target_format: format,
+                        font_name: filename
                     })
                 });
 
@@ -1240,8 +1365,23 @@
                     throw new Error(data.detail || 'Error converting font');
                 }
 
-                const downloadUrl = `${API_URL}${data.download_url}`;
-                window.open(downloadUrl, '_blank');
+                // Convert base64 response to blob and download
+                const byteCharacters = atob(data.font_data);
+                const byteNumbers = new Array(byteCharacters.length);
+                for (let i = 0; i < byteCharacters.length; i++) {
+                    byteNumbers[i] = byteCharacters.charCodeAt(i);
+                }
+                const byteArray = new Uint8Array(byteNumbers);
+                const blob = new Blob([byteArray], { type: 'font/' + format });
+                
+                const downloadUrl = URL.createObjectURL(blob);
+                const a = document.createElement('a');
+                a.href = downloadUrl;
+                a.download = `${filename.split('.')[0]}.${format}`;
+                document.body.appendChild(a);
+                a.click();
+                document.body.removeChild(a);
+                URL.revokeObjectURL(downloadUrl);
                 
                 showMessage(`✅ Font converted to ${format.toUpperCase()}! Download started.`, 'success');
                 hideConverter(filename);
