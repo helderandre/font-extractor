@@ -731,6 +731,9 @@
                     <span class="status-dot"></span>
                     <span id="statusText">API Online</span>
                 </div>
+                <button class="theme-toggle" onclick="changeLanguage(currentLanguage === 'pt-BR' ? 'en' : 'pt-BR')" title="Idioma / Language" style="min-width: 3rem;">
+                    <span id="langIcon">🇧🇷</span>
+                </button>
                 <button class="theme-toggle" onclick="toggleTheme()" title="Toggle theme">
                     <span id="themeIcon">🌙</span>
                 </button>
@@ -817,6 +820,192 @@
         let supportedFormats = [];
         let selectedFormat = {};
         let loadedFonts = {};
+        let currentLanguage = localStorage.getItem('language') || 'pt-BR';
+
+        // Translation dictionary
+        const translations = {
+            'pt-BR': {
+                // Header
+                title: 'Extrator de Fontes',
+                subtitle: 'Extraia e gerencie fontes de qualquer website',
+                apiOnline: 'API Online',
+                apiOffline: 'API Offline',
+                toggleTheme: 'Alternar tema',
+                language: 'Idioma',
+                // Input Section
+                websiteUrl: 'URL do Website',
+                urlPlaceholder: 'https://exemplo.com',
+                extractFonts: 'Extrair Fontes',
+                viewStoredFonts: 'Ver Fontes Armazenadas',
+                // Stats
+                fontsFound: 'Fontes Encontradas',
+                fontsDownloaded: 'Fontes Baixadas',
+                // Results
+                extractedFonts: 'Fontes Extraídas',
+                downloadAll: 'Baixar Todas',
+                noFontsYet: 'Nenhuma fonte encontrada ainda',
+                // Font Card
+                download: 'Baixar',
+                downloaded: 'Baixada',
+                convert: 'Converter',
+                delete: 'Excluir',
+                preview: 'Visualizar',
+                format: 'Formato',
+                size: 'Tamanho',
+                previewText: 'Digite o texto para visualizar...',
+                // Messages
+                analyzing: 'Analisando website e extraindo fontes...',
+                downloading: 'Baixando fonte...',
+                converting: 'Convertendo fonte...',
+                deleted: 'Fonte excluída com sucesso!',
+                errorExtract: 'Erro ao extrair fontes. Verifique a URL e tente novamente.',
+                errorDownload: 'Erro ao baixar a fonte.',
+                errorConvert: 'Erro ao converter a fonte.',
+                errorDelete: 'Erro ao excluir a fonte.',
+                enterUrl: 'Por favor, digite uma URL',
+                success: 'Sucesso!',
+                error: 'Erro!',
+                // Footer
+                footerText: 'Feito com Python + FastAPI',
+                apiDocs: 'Documentação da API',
+                // Conversion
+                convertTo: 'Converter para',
+                loadingFromBrowser: 'Carregando fonte do navegador...',
+                sendingToServer: 'Enviando para o servidor...',
+                convertingFormat: 'Convertendo formato...',
+                downloadingConverted: 'Baixando arquivo convertido...',
+                fontNotInStorage: 'Fonte não está no armazenamento, baixando automaticamente...',
+                fontInfoNotFound: 'Informações da fonte não encontradas. Por favor, extraia fontes de um website primeiro.',
+                failedToDownload: 'Falha ao baixar a fonte',
+                // Storage
+                storedFonts: 'Fontes Armazenadas',
+                noStoredFonts: 'Nenhuma fonte armazenada',
+                clearAll: 'Limpar Todas',
+                confirmClearAll: 'Tem certeza que deseja excluir todas as fontes armazenadas?',
+                allFontsCleared: 'Todas as fontes foram excluídas!'
+            },
+            'en': {
+                // Header
+                title: 'Font Extractor',
+                subtitle: 'Extract and manage fonts from any website',
+                apiOnline: 'API Online',
+                apiOffline: 'API Offline',
+                toggleTheme: 'Toggle theme',
+                language: 'Language',
+                // Input Section
+                websiteUrl: 'Website URL',
+                urlPlaceholder: 'https://example.com',
+                extractFonts: 'Extract Fonts',
+                viewStoredFonts: 'View Stored Fonts',
+                // Stats
+                fontsFound: 'Fonts Found',
+                fontsDownloaded: 'Fonts Downloaded',
+                // Results
+                extractedFonts: 'Extracted Fonts',
+                downloadAll: 'Download All',
+                noFontsYet: 'No fonts found yet',
+                // Font Card
+                download: 'Download',
+                downloaded: 'Downloaded',
+                convert: 'Convert',
+                delete: 'Delete',
+                preview: 'Preview',
+                format: 'Format',
+                size: 'Size',
+                previewText: 'Type text to preview...',
+                // Messages
+                analyzing: 'Analyzing website and extracting fonts...',
+                downloading: 'Downloading font...',
+                converting: 'Converting font...',
+                deleted: 'Font deleted successfully!',
+                errorExtract: 'Error extracting fonts. Check the URL and try again.',
+                errorDownload: 'Error downloading font.',
+                errorConvert: 'Error converting font.',
+                errorDelete: 'Error deleting font.',
+                enterUrl: 'Please enter a URL',
+                success: 'Success!',
+                error: 'Error!',
+                // Footer
+                footerText: 'Built with Python + FastAPI',
+                apiDocs: 'API Documentation',
+                // Conversion
+                convertTo: 'Convert to',
+                loadingFromBrowser: 'Loading font from browser...',
+                sendingToServer: 'Sending to server...',
+                convertingFormat: 'Converting format...',
+                downloadingConverted: 'Downloading converted file...',
+                fontNotInStorage: 'Font not in storage, downloading automatically...',
+                fontInfoNotFound: 'Font information not found. Please extract fonts from a website first.',
+                failedToDownload: 'Failed to download font',
+                // Storage
+                storedFonts: 'Stored Fonts',
+                noStoredFonts: 'No stored fonts',
+                clearAll: 'Clear All',
+                confirmClearAll: 'Are you sure you want to delete all stored fonts?',
+                allFontsCleared: 'All fonts have been cleared!'
+            }
+        };
+
+        // Get translation
+        function t(key) {
+            return translations[currentLanguage][key] || translations['en'][key] || key;
+        }
+
+        // Change language
+        function changeLanguage(lang) {
+            currentLanguage = lang;
+            localStorage.setItem('language', lang);
+            
+            // Update language icon
+            const langIcon = document.getElementById('langIcon');
+            if (langIcon) {
+                langIcon.textContent = lang === 'pt-BR' ? '🇧🇷' : '🇺🇸';
+            }
+            
+            updateUILanguage();
+            showMessage(t('success'), 'success');
+        }
+
+        // Update all UI text
+        function updateUILanguage() {
+            // Update HTML lang attribute
+            document.documentElement.lang = currentLanguage;
+            
+            // Header
+            document.querySelector('.header-title h1').textContent = t('title');
+            document.querySelector('.header-title p').textContent = t('subtitle');
+            document.getElementById('statusText').textContent = t('apiOnline');
+            document.querySelector('.theme-toggle').title = t('toggleTheme');
+            
+            // Input Section
+            document.querySelector('.input-label').textContent = t('websiteUrl');
+            document.getElementById('urlInput').placeholder = t('urlPlaceholder');
+            document.querySelector('#extractBtn span:last-child').textContent = t('extractFonts');
+            document.querySelector('#listBtn span:last-child').textContent = t('viewStoredFonts');
+            
+            // Stats
+            document.querySelectorAll('.stat-label')[0].textContent = t('fontsFound');
+            document.querySelectorAll('.stat-label')[1].textContent = t('fontsDownloaded');
+            
+            // Results
+            document.querySelector('.results-header h2').textContent = t('extractedFonts');
+            const downloadAllBtn = document.querySelector('.results-header .btn');
+            if (downloadAllBtn) {
+                downloadAllBtn.querySelector('span:last-child').textContent = t('downloadAll');
+            }
+            
+            // Loading
+            document.querySelector('.loading-text').textContent = t('analyzing');
+            
+            // Footer
+            document.querySelector('.footer p').innerHTML = `${t('footerText')} | <a href="/docs" target="_blank">${t('apiDocs')}</a>`;
+            
+            // Empty state
+            const emptyStateText = document.querySelector('.empty-state-text');
+            if (emptyStateText) {
+                emptyStateText.textContent = t('noFontsYet');
+            }
+        }
 
         // Theme Management
         function toggleTheme() {
@@ -831,11 +1020,26 @@
             localStorage.setItem('theme', newTheme);
         }
 
-        // Load saved theme
+        // Load saved preferences
         window.addEventListener('load', () => {
+            // Load theme
             const savedTheme = localStorage.getItem('theme') || 'light';
+            document.documentElement.classList.remove('light', 'dark');
             document.documentElement.classList.add(savedTheme);
             document.getElementById('themeIcon').textContent = savedTheme === 'dark' ? '☀️' : '🌙';
+            
+            // Load language
+            const savedLanguage = localStorage.getItem('language') || 'pt-BR';
+            currentLanguage = savedLanguage;
+            
+            // Update language icon
+            const langIcon = document.getElementById('langIcon');
+            if (langIcon) {
+                langIcon.textContent = savedLanguage === 'pt-BR' ? '🇧🇷' : '🇺🇸';
+            }
+            
+            updateUILanguage();
+            
             document.getElementById('urlInput').focus();
         });
 
@@ -909,12 +1113,12 @@
             try {
                 const response = await fetch(`${API_URL}/`);
                 if (response.ok) {
-                    document.getElementById('statusText').textContent = 'API Online';
+                    document.getElementById('statusText').textContent = t('apiOnline');
                     return true;
                 }
             } catch (e) {
-                document.getElementById('statusText').textContent = 'API Offline';
-                showMessage('⚠️ API is offline. Please start the server.', 'error');
+                document.getElementById('statusText').textContent = t('apiOffline');
+                showMessage(`⚠️ ${t('apiOffline')}. Please start the server.`, 'error');
                 return false;
             }
         }
@@ -932,7 +1136,7 @@
             const url = urlInput.value.trim();
 
             if (!url) {
-                showMessage('⚠️ Please enter a valid URL.', 'error');
+                showMessage(`⚠️ ${t('enterUrl')}`, 'error');
                 urlInput.focus();
                 return;
             }
@@ -940,7 +1144,7 @@
             try {
                 new URL(url);
             } catch (e) {
-                showMessage('❌ Invalid URL. Use the complete format (e.g., https://example.com)', 'error');
+                showMessage(`❌ ${t('enterUrl')}`, 'error');
                 return;
             }
 
@@ -952,6 +1156,9 @@
             document.getElementById('message').innerHTML = '';
             document.getElementById('extractBtn').disabled = true;
             document.getElementById('listBtn').disabled = true;
+            
+            // Update loading text
+            document.querySelector('.loading-text').textContent = t('analyzing');
 
             try {
                 const response = await fetch(`${API_URL}/extract-fonts`, {
@@ -965,7 +1172,7 @@
                 const data = await response.json();
 
                 if (!response.ok) {
-                    throw new Error(data.detail || 'Error processing request');
+                    throw new Error(data.detail || t('errorExtract'));
                 }
 
                 document.getElementById('loading').classList.remove('active');
@@ -973,14 +1180,14 @@
                 displayResults(data);
 
                 if (data.fonts_found > 0) {
-                    showMessage(`✅ Success! ${data.fonts_found} font(s) found on ${url}. Click "Download" to save to your browser.`, 'success');
+                    showMessage(`✅ ${t('success')} ${data.fonts_found} ${currentLanguage === 'pt-BR' ? 'fonte(s) encontrada(s)' : 'font(s) found'}.`, 'success');
                 } else {
-                    showMessage('⚠️ No fonts found on this website. Try another site.', 'info');
+                    showMessage(`⚠️ ${t('noFontsYet')}`, 'info');
                 }
 
             } catch (error) {
                 document.getElementById('loading').classList.remove('active');
-                showMessage(`❌ Error: ${error.message}`, 'error');
+                showMessage(`❌ ${t('error')}: ${error.message}`, 'error');
                 console.error('Error:', error);
             } finally {
                 document.getElementById('extractBtn').disabled = false;
@@ -1004,7 +1211,7 @@
                 });
 
                 if (allFonts.length === 0) {
-                    showMessage('ℹ️ No fonts stored yet. Extract fonts from a website and download them first!', 'info');
+                    showMessage(`ℹ️ ${t('noStoredFonts')}`, 'info');
                     return;
                 }
 
@@ -1075,7 +1282,7 @@
                 fontsList.innerHTML = `
                     <div class="empty-state">
                         <div class="empty-state-icon">😔</div>
-                        <p class="empty-state-text">No fonts found on this website</p>
+                        <p class="empty-state-text">${t('noFontsYet')}</p>
                     </div>
                 `;
                 document.getElementById('results').classList.add('active');
@@ -1098,7 +1305,7 @@
             if (isDownloaded) {
                 const downloadBtn = card.querySelector('.btn-primary');
                 if (downloadBtn) {
-                    downloadBtn.innerHTML = '<span>✅</span><span>Downloaded</span>';
+                    downloadBtn.innerHTML = `<span>✅</span><span data-i18n="downloaded">${t('downloaded')}</span>`;
                     downloadBtn.classList.add('downloaded');
                 }
             }
@@ -1128,15 +1335,15 @@
                 <div class="font-actions">
                     <button class="btn btn-primary" onclick="downloadFile('${filename}')">
                         <span>⬇️</span>
-                        <span>Download</span>
+                        <span data-i18n="download">${t('download')}</span>
                     </button>
                     <button class="btn btn-outline" onclick="showPreview('${filename}', '${font.name}')">
                         <span>👁️</span>
-                        <span>Preview</span>
+                        <span data-i18n="preview">${t('preview')}</span>
                     </button>
                     <button class="btn btn-outline" onclick="showConverter('${filename}')">
                         <span>🔄</span>
-                        <span>Convert</span>
+                        <span data-i18n="convert">${t('convert')}</span>
                     </button>
                 </div>
 
@@ -1145,7 +1352,7 @@
                         <input type="text" 
                                class="preview-input" 
                                id="preview-input-${safeFilename}" 
-                               placeholder="Type text to preview..."
+                               placeholder="${t('previewText')}"
                                value="The quick brown fox"
                                onkeyup="updatePreviewText('${filename}')">
                         <div class="preview-sizes">
@@ -1162,16 +1369,16 @@
                 </div>
 
                 <div class="converter-section" id="converter-${safeFilename}">
-                    <label class="converter-label">Convert to:</label>
+                    <label class="converter-label">${t('convertTo')}:</label>
                     <div class="format-grid" id="formats-${safeFilename}"></div>
                     <div class="btn-group">
                         <button class="btn btn-primary" onclick="convertFont('${filename}')">
                             <span>✨</span>
-                            <span>Convert</span>
+                            <span data-i18n="convert">${t('convert')}</span>
                         </button>
                         <button class="btn btn-outline" onclick="hideConverter('${filename}')">
                             <span>✕</span>
-                            <span>Cancel</span>
+                            <span>${currentLanguage === 'pt-BR' ? 'Cancelar' : 'Cancel'}</span>
                         </button>
                     </div>
                 </div>
@@ -1256,9 +1463,9 @@
                     }
                 }
 
-                showMessage(`✅ ${filename} downloaded and saved!`, 'success');
+                showMessage(`✅ ${t('success')}! ${filename}`, 'success');
             } catch (error) {
-                showMessage(`❌ Error downloading: ${error.message}`, 'error');
+                showMessage(`❌ ${t('errorDownload')}: ${error.message}`, 'error');
                 console.error('Download error:', error);
             }
         }
@@ -1429,7 +1636,7 @@
             const format = selectedFormat[filename];
             
             if (!format) {
-                showMessage('⚠️ Please select a format first!', 'error');
+                showMessage(`⚠️ ${currentLanguage === 'pt-BR' ? 'Por favor, selecione um formato primeiro!' : 'Please select a format first!'}`, 'error');
                 return;
             }
 
@@ -1439,8 +1646,8 @@
             
             try {
                 // Step 1: Loading from IndexedDB
-                converterDiv.innerHTML = '<div style="text-align: center; padding: 1rem;"><div class="spinner" style="width: 2rem; height: 2rem; margin: 0 auto;"></div><p style="margin-top: 0.5rem; font-size: 0.875rem;">📦 Loading font from browser...</p></div>';
-                showMessage('📦 Step 1/4: Loading font from browser storage...', 'info');
+                converterDiv.innerHTML = `<div style="text-align: center; padding: 1rem;"><div class="spinner" style="width: 2rem; height: 2rem; margin: 0 auto;"></div><p style="margin-top: 0.5rem; font-size: 0.875rem;">📦 ${t('loadingFromBrowser')}</p></div>`;
+                showMessage(`📦 ${currentLanguage === 'pt-BR' ? 'Passo 1/4' : 'Step 1/4'}: ${t('loadingFromBrowser')}`, 'info');
                 
                 // Get font from IndexedDB
                 console.log('Looking for font in IndexedDB:', filename);
@@ -1450,13 +1657,13 @@
                 // If not in IndexedDB, download it first
                 if (!fontData || !fontData.data) {
                     console.log('Font not in IndexedDB, downloading automatically...');
-                    converterDiv.innerHTML = '<div style="text-align: center; padding: 1rem;"><div class="spinner" style="width: 2rem; height: 2rem; margin: 0 auto;"></div><p style="margin-top: 0.5rem; font-size: 0.875rem;">⬇️ Downloading font first...</p></div>';
-                    showMessage('⬇️ Font not in storage, downloading automatically...', 'info');
+                    converterDiv.innerHTML = `<div style="text-align: center; padding: 1rem;"><div class="spinner" style="width: 2rem; height: 2rem; margin: 0 auto;"></div><p style="margin-top: 0.5rem; font-size: 0.875rem;">⬇️ ${currentLanguage === 'pt-BR' ? 'Baixando fonte primeiro...' : 'Downloading font first...'}</p></div>`;
+                    showMessage(`⬇️ ${t('fontNotInStorage')}`, 'info');
                     
                     // Find font in currentFonts array
                     const font = currentFonts.find(f => f.name === filename);
                     if (!font) {
-                        throw new Error('❌ Font information not found. Please extract fonts from a website first.');
+                        throw new Error(`❌ ${t('fontInfoNotFound')}`);
                     }
 
                     // Download via proxy
@@ -1464,7 +1671,7 @@
                     const response = await fetch(proxyUrl);
                     
                     if (!response.ok) {
-                        throw new Error('Failed to download font');
+                        throw new Error(t('failedToDownload'));
                     }
                     
                     const blob = await response.blob();
@@ -1504,8 +1711,8 @@
                 });
 
                 // Step 2: Sending to server
-                converterDiv.innerHTML = '<div style="text-align: center; padding: 1rem;"><div class="spinner" style="width: 2rem; height: 2rem; margin: 0 auto;"></div><p style="margin-top: 0.5rem; font-size: 0.875rem;">☁️ Sending to server...</p></div>';
-                showMessage(`☁️ Step 2/4: Sending ${fontData.format.toUpperCase()} to server for conversion...`, 'info');
+                converterDiv.innerHTML = `<div style="text-align: center; padding: 1rem;"><div class="spinner" style="width: 2rem; height: 2rem; margin: 0 auto;"></div><p style="margin-top: 0.5rem; font-size: 0.875rem;">☁️ ${t('sendingToServer')}</p></div>`;
+                showMessage(`☁️ ${currentLanguage === 'pt-BR' ? 'Passo 2/4' : 'Step 2/4'}: ${t('sendingToServer')}`, 'info');
 
                 // Prepare request
                 const response = await fetch(`${API_URL}/convert-font`, {
@@ -1522,8 +1729,8 @@
                 });
 
                 // Step 3: Processing
-                converterDiv.innerHTML = '<div style="text-align: center; padding: 1rem;"><div class="spinner" style="width: 2rem; height: 2rem; margin: 0 auto;"></div><p style="margin-top: 0.5rem; font-size: 0.875rem;">⚙️ Converting format...</p></div>';
-                showMessage(`⚙️ Step 3/4: Converting ${fontData.format.toUpperCase()} → ${format.toUpperCase()}...`, 'info');
+                converterDiv.innerHTML = `<div style="text-align: center; padding: 1rem;"><div class="spinner" style="width: 2rem; height: 2rem; margin: 0 auto;"></div><p style="margin-top: 0.5rem; font-size: 0.875rem;">⚙️ ${t('convertingFormat')}</p></div>`;
+                showMessage(`⚙️ ${currentLanguage === 'pt-BR' ? 'Passo 3/4' : 'Step 3/4'}: ${t('convertingFormat')} ${fontData.format.toUpperCase()} → ${format.toUpperCase()}...`, 'info');
 
                 const data = await response.json();
 
@@ -1534,8 +1741,8 @@
                 console.log('Conversion successful:', data.message);
 
                 // Step 4: Preparing download
-                converterDiv.innerHTML = '<div style="text-align: center; padding: 1rem;"><div class="spinner" style="width: 2rem; height: 2rem; margin: 0 auto;"></div><p style="margin-top: 0.5rem; font-size: 0.875rem;">⬇️ Preparing download...</p></div>';
-                showMessage('⬇️ Step 4/4: Preparing download...', 'info');
+                converterDiv.innerHTML = `<div style="text-align: center; padding: 1rem;"><div class="spinner" style="width: 2rem; height: 2rem; margin: 0 auto;"></div><p style="margin-top: 0.5rem; font-size: 0.875rem;">⬇️ ${t('downloadingConverted')}</p></div>`;
+                showMessage(`⬇️ ${currentLanguage === 'pt-BR' ? 'Passo 4/4' : 'Step 4/4'}: ${t('downloadingConverted')}`, 'info');
 
                 // Convert base64 response to blob and download
                 console.log('Converting base64 to blob for download...');
@@ -1561,7 +1768,7 @@
                 URL.revokeObjectURL(downloadUrl);
                 
                 console.log('✅ Download triggered successfully');
-                showMessage(`✅ Success! ${downloadFilename} is downloading now!`, 'success');
+                showMessage(`✅ ${t('success')}! ${downloadFilename}`, 'success');
                 
                 // Wait a bit before hiding converter to show success message
                 setTimeout(() => {
@@ -1571,7 +1778,7 @@
             } catch (error) {
                 console.error('Conversion error:', error);
                 converterDiv.innerHTML = originalHtml;
-                showMessage(`❌ Error converting: ${error.message}`, 'error');
+                showMessage(`❌ ${t('errorConvert')}: ${error.message}`, 'error');
             }
         }
 
