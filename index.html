@@ -1444,26 +1444,56 @@
                 
                 // Get font from IndexedDB
                 console.log('Looking for font in IndexedDB:', filename);
-                const fontData = await getFontFromIndexedDB(filename);
+                let fontData = await getFontFromIndexedDB(filename);
                 console.log('Font data from IndexedDB:', fontData ? 'found' : 'not found');
                 
+                // If not in IndexedDB, download it first
                 if (!fontData || !fontData.data) {
-                    // List available fonts for debugging
-                    try {
-                        const db = await openFontDB();
-                        const tx = db.transaction(['fonts'], 'readonly');
-                        const store = tx.objectStore('fonts');
-                        const request = store.getAll();
-                        const allFonts = await new Promise((resolve, reject) => {
-                            request.onsuccess = () => resolve(request.result);
-                            request.onerror = () => reject(request.error);
-                        });
-                        console.log('Available fonts in IndexedDB:', allFonts.map(f => f.name));
-                    } catch (e) {
-                        console.log('Error listing fonts:', e);
+                    console.log('Font not in IndexedDB, downloading automatically...');
+                    converterDiv.innerHTML = '<div style="text-align: center; padding: 1rem;"><div class="spinner" style="width: 2rem; height: 2rem; margin: 0 auto;"></div><p style="margin-top: 0.5rem; font-size: 0.875rem;">⬇️ Downloading font first...</p></div>';
+                    showMessage('⬇️ Font not in storage, downloading automatically...', 'info');
+                    
+                    // Find font in currentFonts array
+                    const font = currentFonts.find(f => f.name === filename);
+                    if (!font) {
+                        throw new Error('❌ Font information not found. Please extract fonts from a website first.');
+                    }
+
+                    // Download via proxy
+                    const proxyUrl = `${API_URL}/proxy-font?url=${encodeURIComponent(font.url)}`;
+                    const response = await fetch(proxyUrl);
+                    
+                    if (!response.ok) {
+                        throw new Error('Failed to download font');
                     }
                     
-                    throw new Error('⚠️ Font not downloaded yet! Click the "Download" button first to save it to your browser, then try converting.');
+                    const blob = await response.blob();
+                    const arrayBuffer = await blob.arrayBuffer();
+                    
+                    // Convert to base64 in chunks
+                    const bytes = new Uint8Array(arrayBuffer);
+                    let binary = '';
+                    const chunkSize = 8192;
+                    for (let i = 0; i < bytes.length; i += chunkSize) {
+                        const chunk = bytes.subarray(i, Math.min(i + chunkSize, bytes.length));
+                        binary += String.fromCharCode.apply(null, chunk);
+                    }
+                    const base64 = btoa(binary);
+
+                    // Save to IndexedDB
+                    const fontToSave = {
+                        name: filename,
+                        format: font.format,
+                        url: font.url,
+                        data: base64,
+                        size: arrayBuffer.byteLength,
+                        downloadedAt: new Date().toISOString()
+                    };
+                    console.log('Saving downloaded font to IndexedDB:', fontToSave.name);
+                    await saveFontToIndexedDB(fontToSave);
+                    console.log('✅ Font downloaded and saved successfully');
+                    
+                    fontData = fontToSave;
                 }
 
                 console.log('Converting font:', {
