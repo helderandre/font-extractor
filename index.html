@@ -1043,8 +1043,29 @@
             fontsList.innerHTML = '';
 
             if (data.fonts && data.fonts.length > 0) {
+                // Deduplicate fonts by URL (in case backend missed some)
+                const uniqueFonts = [];
+                const seenUrls = new Set();
+                
+                data.fonts.forEach(font => {
+                    // Normalize URL by removing query params
+                    const normalizedUrl = font.url.split('?')[0];
+                    
+                    if (!seenUrls.has(normalizedUrl)) {
+                        seenUrls.add(normalizedUrl);
+                        uniqueFonts.push(font);
+                    } else {
+                        console.log('Duplicate font removed:', font.name, normalizedUrl);
+                    }
+                });
+                
+                console.log(`Fonts: ${data.fonts.length} total, ${uniqueFonts.length} unique after deduplication`);
+                
+                // Update count with deduplicated number
+                document.getElementById('fontsFound').textContent = uniqueFonts.length;
+                
                 // Create cards asynchronously to check IndexedDB
-                data.fonts.forEach(async font => {
+                uniqueFonts.forEach(async font => {
                     const fontCard = await createFontCardAsync(font, font.name);
                     fontsList.appendChild(fontCard);
                 });

@@ -192,11 +192,17 @@ async def extract_fonts(request: URLRequest):
                     except:
                         pass
         
-        # 4. Remover duplicatas
+        # 4. Remover duplicatas por URL e criar hash único
         unique_fonts = []
+        seen_urls = set()
+        
         for font in fonts:
-            if font['url'] not in seen_urls:
-                seen_urls.add(font['url'])
+            font_url = font['url']
+            # Normalizar URL removendo query params para melhor deduplicação
+            normalized_url = font_url.split('?')[0] if '?' in font_url else font_url
+            
+            if normalized_url not in seen_urls:
+                seen_urls.add(normalized_url)
                 unique_fonts.append(font)
         
         return {
