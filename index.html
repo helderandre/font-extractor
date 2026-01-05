@@ -809,7 +809,7 @@
         console.log('Using API URL:', API_URL);
         
         let currentFonts = [];
-        let supportedFormats = {};
+        let supportedFormats = [];
         let selectedFormat = {};
         let loadedFonts = {};
 
@@ -839,7 +839,7 @@
             try {
                 const response = await fetch(`${API_URL}/supported-formats`);
                 const data = await response.json();
-                supportedFormats = data.formats || {};
+                supportedFormats = data.formats || [];
             } catch (error) {
                 console.error('Error loading formats:', error);
             }
@@ -1133,10 +1133,25 @@
                 if (!response.ok) {
                     throw new Error('Failed to download font');
                 }
+                
+                // Validate content type
+                const contentType = response.headers.get('content-type');
+                if (contentType && contentType.includes('text/html')) {
+                    throw new Error('Received HTML instead of font file. CORS or proxy issue.');
+                }
 
                 const blob = await response.blob();
                 const arrayBuffer = await blob.arrayBuffer();
-                const base64 = btoa(String.fromCharCode(...new Uint8Array(arrayBuffer)));
+                
+                // Convert to base64 in chunks to avoid stack overflow
+                const bytes = new Uint8Array(arrayBuffer);
+                let binary = '';
+                const chunkSize = 8192;
+                for (let i = 0; i < bytes.length; i += chunkSize) {
+                    const chunk = bytes.subarray(i, Math.min(i + chunkSize, bytes.length));
+                    binary += String.fromCharCode.apply(null, chunk);
+                }
+                const base64 = btoa(binary);
 
                 // Save to IndexedDB
                 await saveFontToIndexedDB({
@@ -1152,7 +1167,10 @@
                 const downloadUrl = URL.createObjectURL(blob);
                 const a = document.createElement('a');
                 a.href = downloadUrl;
-                a.download = filename;
+                // Ensure proper file extension
+                const extension = font.format || 'font';
+                const baseName = filename.includes('.') ? filename.split('.')[0] : filename;
+                a.download = `${baseName}.${extension}`;
                 document.body.appendChild(a);
                 a.click();
                 document.body.removeChild(a);
@@ -1289,13 +1307,17 @@
             
             if (!converterDiv.classList.contains('active')) {
                 formatsDiv.innerHTML = '';
-                Object.keys(supportedFormats).forEach(format => {
-                    const option = document.createElement('div');
-                    option.className = 'format-option';
-                    option.textContent = format.toUpperCase();
-                    option.onclick = () => selectFormat(filename, format);
-                    formatsDiv.appendChild(option);
-                });
+                
+                // supportedFormats is an array from the API
+                if (Array.isArray(supportedFormats)) {
+                    supportedFormats.forEach(format => {
+                        const option = document.createElement('div');
+                        option.className = 'format-option';
+                        option.textContent = format.toUpperCase();
+                        option.onclick = () => selectFormat(filename, format);
+                        formatsDiv.appendChild(option);
+                    });
+                }
                 
                 converterDiv.classList.add('active');
                 selectedFormat[filename] = null;
