@@ -40,14 +40,14 @@ class ConvertFontRequest(BaseModel):
     target_format: str
     font_name: str
 
-# Formatos suportados
+# Formatos suportados para conversão
 SUPPORTED_FORMATS = {
     'ttf': 'TrueType Font',
     'otf': 'OpenType Font',
     'woff': 'Web Open Font Format',
     'woff2': 'Web Open Font Format 2',
-    'eot': 'Embedded OpenType',
-    'svg': 'SVG Font'
+    # 'eot': 'Embedded OpenType',  # Não totalmente suportado
+    # 'svg': 'SVG Font'  # Não totalmente suportado
 }
 
 def detect_font_format(url: str) -> str:
@@ -217,6 +217,13 @@ async def convert_font(request: ConvertFontRequest):
     Retorna fonte convertida em base64 (sem salvar no servidor).
     """
     try:
+        # Validar formatos
+        if request.source_format not in SUPPORTED_FORMATS:
+            raise HTTPException(status_code=400, detail=f"Source format '{request.source_format}' not supported")
+        
+        if request.target_format not in SUPPORTED_FORMATS:
+            raise HTTPException(status_code=400, detail=f"Target format '{request.target_format}' not supported")
+        
         # Decodificar base64
         font_bytes = base64.b64decode(request.font_data)
         
@@ -229,16 +236,29 @@ async def convert_font(request: ConvertFontRequest):
         # Buffer de saída
         output_buffer = io.BytesIO()
         
-        # Configurar flavor baseado no formato
+        # Configurar flavor baseado no formato de destino
         if request.target_format == 'woff':
             font.flavor = 'woff'
+            font.save(output_buffer)
         elif request.target_format == 'woff2':
             font.flavor = 'woff2'
+            font.save(output_buffer)
+        elif request.target_format in ['ttf', 'otf']:
+            # TTF/OTF não usam flavor
+            font.flavor = None
+            # Salvar com extensão específica usando nome temporário
+            temp_filename = f"temp.{request.target_format}"
+            font.save(output_buffer)
+        elif request.target_format == 'eot':
+            # EOT requer conversão especial - não totalmente suportado por fonttools
+            raise HTTPException(status_code=400, detail="EOT conversion not fully supported. Try TTF or WOFF instead.")
+        elif request.target_format == 'svg':
+            # SVG requer conversão especial
+            raise HTTPException(status_code=400, detail="SVG conversion not fully supported. Try TTF or WOFF instead.")
         else:
             font.flavor = None
+            font.save(output_buffer)
         
-        # Salvar no buffer
-        font.save(output_buffer)
         font.close()
         
         # Converter para base64
@@ -251,9 +271,11 @@ async def convert_font(request: ConvertFontRequest):
             "source_format": request.source_format,
             "target_format": request.target_format,
             "font_data": converted_base64,
-            "message": "Font converted successfully"
+            "message": f"Font converted from {request.source_format} to {request.target_format}"
         }
     
+    except HTTPException:
+        raise
     except Exception as e:
         raise HTTPException(status_code=400, detail=f"Conversion error: {str(e)}")
 

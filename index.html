@@ -1367,6 +1367,13 @@
                     throw new Error('Font not found in storage. Please download it first.');
                 }
 
+                console.log('Converting font:', {
+                    filename,
+                    sourceFormat: fontData.format,
+                    targetFormat: format,
+                    dataLength: fontData.data.length
+                });
+
                 // Prepare request
                 const response = await fetch(`${API_URL}/convert-font`, {
                     method: 'POST',
@@ -1386,6 +1393,8 @@
                 if (!response.ok) {
                     throw new Error(data.detail || 'Error converting font');
                 }
+
+                console.log('Conversion successful:', data.message);
 
                 // Convert base64 response to blob and download
                 const byteCharacters = atob(data.font_data);
